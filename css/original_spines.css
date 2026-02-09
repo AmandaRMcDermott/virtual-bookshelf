@@ -1,0 +1,624 @@
+/* Virtual Bookshelf - Original Spine Display CSS */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.bookshelf-container {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+    padding: 20px;
+}
+
+/* Bookshelf Styles with realistic wood texture */
+.bookshelf {
+    /* Rich wood grain texture for the background */
+    background-color: #623626;
+    background-image:
+        linear-gradient(90deg,
+            rgba(68, 40, 29, 0.8) 0%,
+            rgba(98, 54, 38, 0.5) 20%,
+            rgba(139, 69, 19, 0.6) 40%,
+            rgba(98, 54, 38, 0.5) 60%,
+            rgba(68, 40, 29, 0.8) 100%),
+        repeating-linear-gradient(0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(0, 0, 0, 0.1) 2px,
+            rgba(0, 0, 0, 0.1) 4px);
+    border: 12px solid #4A2511;
+    border-radius: 0;
+    box-shadow:
+        inset 0 10px 10px -10px rgba(0, 0, 0, 0.5),
+        inset 0 -10px 10px -10px rgba(0, 0, 0, 0.5),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    margin: 20px 0;
+    padding: 0;
+    position: relative;
+}
+
+/* Shelf row styles with wood texture and dividers */
+.bookshelf-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    min-height: 300px;
+    padding: 10px 15px;
+    position: relative;
+    border-bottom: 12px solid #4A2511;
+    box-shadow:
+        0 3px 5px -3px rgba(0, 0, 0, 0.8),
+        0 6px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+/* Last shelf row has no border */
+.bookshelf-row:last-child {
+    border-bottom: none;
+}
+
+/* Add vertical wood grain dividers */
+.bookshelf-row:before {
+    content: "";
+    position: absolute;
+    left: 33%;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background-color: rgba(58, 30, 19, 0.8);
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.3), -1px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+.bookshelf-row:after {
+    content: "";
+    position: absolute;
+    right: 33%;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background-color: rgba(58, 30, 19, 0.8);
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.3), -1px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Book styles with enhanced realism */
+.book {
+    display: inline-flex;
+    flex-direction: column;
+    margin-right: 1px;
+    /* Reduced spacing for tighter packing */
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Book spine styles with enhanced realism and shading */
+.book-spine {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+
+    /* Subtle shadow at the bottom of the book to simulate sitting on a shelf */
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        /* Bottom shadow */
+        -1px 0 3px rgba(0, 0, 0, 0.2),
+        /* Left edge shadow */
+        1px 0 3px rgba(0, 0, 0, 0.2);
+    /* Right edge shadow */
+
+    /* 3D perspective effect with subtle rotation */
+    transform: perspective(1000px) rotateY(0deg);
+    transform-origin: left center;
+    transition: transform 0.3s;
+}
+
+/* Add top edge highlighting and bottom shadows */
+.book-spine:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+    z-index: 2;
+}
+
+.book-spine:after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+    z-index: 2;
+}
+
+/* Subtle hover effect */
+.book:hover .book-spine {
+    transform: perspective(1000px) rotateY(5deg);
+    box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.5),
+        -2px 0 5px rgba(0, 0, 0, 0.2),
+        2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Spine image styles */
+.spine-image {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    object-position: center;
+    /* Add subtle shading overlay */
+    filter: brightness(0.95) contrast(1.05) saturate(0.9);
+}
+
+/* Add more subtle shading to images */
+.book-spine:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right,
+            rgba(0, 0, 0, 0.2) 0%,
+            rgba(0, 0, 0, 0.05) 5%,
+            rgba(0, 0, 0, 0) 20%,
+            rgba(0, 0, 0, 0) 80%,
+            rgba(0, 0, 0, 0.05) 95%,
+            rgba(0, 0, 0, 0.2) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Selected book highlight */
+.book.selected .book-spine {
+    box-shadow:
+        0 0 0 2px #3498db,
+        0 4px 6px rgba(0, 0, 0, 0.3);
+    transform: perspective(1000px) rotateY(10deg);
+}
+
+/* Book info panel */
+.book-info-panel {
+    position: fixed;
+    width: 280px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: none;
+    z-index: 100;
+    font-size: 0.9rem;
+}
+
+.book-info-panel.active {
+    display: block;
+}
+
+.book-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.book-info-header h4 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.book-info-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+}
+
+.book-info-close:hover {
+    color: #333;
+}
+
+.book-dimensions {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.control-group {
+    margin-bottom: 12px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+}
+
+.value-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 3px;
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    background-color: rgba(52, 152, 219, 0.5);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.book:hover .resize-handle {
+    opacity: 0.7;
+}
+
+.resize-handle.right {
+    width: 5px;
+    height: 50%;
+    right: -3px;
+    top: 25%;
+    cursor: ew-resize;
+}
+
+.resize-handle.bottom {
+    width: 50%;
+    height: 5px;
+    bottom: -3px;
+    left: 25%;
+    cursor: ns-resize;
+}
+
+.resize-handle.corner {
+    width: 12px;
+    height: 12px;
+    bottom: -6px;
+    right: -6px;
+    border-radius: 6px;
+    cursor: nwse-resize;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+/* Book info panel mode buttons */
+.book-info-modes {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.mode-button {
+    flex: 1;
+    padding: 6px 0;
+    text-align: center;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.mode-button:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.mode-button:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.mode-button.active {
+    background-color: #3498db;
+    border-color: #2980b9;
+    color: white;
+}
+
+/* Control panel for dimensions */
+.controls-panel {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.controls-panel h3 {
+    padding: 15px 20px;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    border-bottom: 1px solid #eee;
+}
+
+.controls-content {
+    padding: 15px 20px;
+}
+
+.collapsed .controls-content {
+    display: none;
+}
+
+.collapse-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #666;
+    width: 24px;
+    height: 24px;
+    line-height: 1;
+    padding: 0;
+    text-align: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.collapse-toggle:hover {
+    background-color: #f0f0f0;
+}
+
+/* Control buttons */
+.control-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.control-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+button.reset {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+button.reset:hover {
+    background-color: #d0d0d0;
+}
+
+button.apply {
+    background-color: #3498db;
+    color: white;
+}
+
+button.apply:hover {
+    background-color: #2980b9;
+}
+
+/* Resize tip */
+.resize-tip {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+/* Tip with emphasis */
+.tip {
+    background-color: #f8f8f8;
+    border-left: 4px solid #3498db;
+    padding: 10px 15px;
+    margin: 15px 0;
+    font-size: 0.9rem;
+}
+
+.tip strong {
+    color: #2980b9;
+}
+
+/* Group spacing */
+.book.group-start {
+    margin-left: 15px;
+}
+
+.empty-space {
+    height: 1px;
+    display: inline-block;
+}
+
+/* Book info animation */
+.book-info-panel {
+    animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .controls-panel h3 {
+        padding: 12px 15px;
+        font-size: 1.1rem;
+    }
+
+    .controls-content {
+        padding: 12px 15px;
+    }
+
+    .bookshelf-container {
+        margin: 10px;
+        padding: 15px;
+    }
+}
+
+/* Drop target indicators */
+.drop-indicator {
+    position: absolute;
+    background-color: #3498db;
+    width: 3px;
+    top: 0;
+    bottom: 0;
+    transition: opacity 0.3s;
+    z-index: 5;
+    opacity: 0.7;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0.4;
+    }
+}
+
+/* Dragging states */
+.book.dragging {
+    opacity: 0.7;
+    z-index: 10;
+    cursor: grabbing !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+/* Bookshelf row highlighting when dragging over */
+.bookshelf-row.drag-over {
+    background-color: rgba(52, 152, 219, 0.15);
+    box-shadow: inset 0 0 0 2px #3498db;
+    transition: all 0.2s ease;
+}
+
+/* Removed books container highlighting when dragging over */
+.removed-books-container.drag-over {
+    background-color: rgba(231, 76, 60, 0.15);
+    box-shadow: inset 0 0 0 2px #e74c3c;
+}
+
+/* Style for draggable books */
+.book[draggable=true] {
+    cursor: grab;
+}
+
+.book[draggable=true]:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+}
+
+/* Mobile device support for drag and drop */
+@media (max-width: 768px) {
+    .book[draggable=true] {
+        touch-action: none;
+    }
+}
+
+/* Book info controls with updated layout for remove button */
+.book-info-controls {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.book-info-controls .right-controls {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.book-info-controls button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.book-info-controls button.apply {
+    background-color: #27ae60;
+    color: white;
+    margin-left: 10px;
+}
+
+.book-info-controls button.reset {
+    background-color: #7f8c8d;
+    color: white;
+}
+
+.book-info-controls button.remove {
+    background-color: #e74c3c;
+    color: white;
+    width: 100%;
+    padding: 8px;
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.book-info-controls button.remove:hover {
+    background-color: #c0392b;
+}
+
+/* Removed books area styling */
+.removed-books-area {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.removed-books-area h3 {
+    margin-top: 0;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+.removed-books-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    min-height: 150px;
+    background-color: #e8e8e8;
+    border-radius: 4px;
+}
