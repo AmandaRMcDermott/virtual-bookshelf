@@ -5,6 +5,30 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Prevent default drag behavior for images and links throughout the document
+    // This is critical to prevent unwanted file dialog popups during drag operations
+    document.addEventListener('dragstart', function(e) {
+        if (e.target.tagName === 'IMG' || e.target.tagName === 'A') {
+            e.preventDefault();
+        }
+    });
+
+    // Prevent unwanted drag and drop behavior at the document level
+    document.addEventListener('dragover', function(e) {
+        // Only prevent default if not on a droppable area
+        if (!e.target.closest('.bookshelf-row')) {
+            e.preventDefault();
+            e.dataTransfer.effectAllowed = 'none';
+            e.dataTransfer.dropEffect = 'none';
+        }
+    });
+
+    document.addEventListener('drop', function(e) {
+        // Only prevent default if not on a droppable area
+        if (!e.target.closest('.bookshelf-row')) {
+            e.preventDefault();
+        }
+    });
     // First, ensure that spine-only view is active by default
     const viewToggle = document.getElementById('view-toggle');
     const mainBookshelf = document.getElementById('main-bookshelf');
@@ -258,7 +282,9 @@ document.addEventListener('DOMContentLoaded', function () {
         shelfRows.forEach(shelf => {
             // Add dragenter event for highlighting the shelf
             shelf.addEventListener('dragenter', function (e) {
+                // CRITICAL: Prevent default to avoid file chooser dialog
                 e.preventDefault();
+                e.stopPropagation();
 
                 // Clear any pending timeouts
                 if (shelfChangeTimeout) {
@@ -273,6 +299,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Set this as the active shelf
                 activeShelf = this;
                 this.classList.add('drag-over');
+
+                console.log("Dragenter event on shelf");
             });
 
             // Add dragleave event to remove highlighting
@@ -295,7 +323,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Add dragover event listener to each shelf
             shelf.addEventListener('dragover', function (e) {
+                // CRITICAL: Prevent default to enable drop
                 e.preventDefault();
+                e.stopPropagation();
+
+                // Set the drop effect
                 e.dataTransfer.dropEffect = 'move'; // Show move cursor
 
                 const draggingBook = document.querySelector('.dragging');
@@ -339,64 +371,87 @@ document.addEventListener('DOMContentLoaded', function () {
                         shelf.appendChild(indicator);
                     }
                 });
+
+                console.log("Dragover event on shelf");
             });
 
             // Add drop event listener
             shelf.addEventListener('drop', function (e) {
+                // CRITICAL: Prevent default to prevent file open
                 e.preventDefault();
+                e.stopPropagation();
+
+                console.log("Drop event detected on shelf");
+
+                // Remove highlight
                 this.classList.remove('drag-over');
 
-                const bookId = e.dataTransfer.getData('text/plain');
-                const draggingBook = document.querySelector('.dragging');
+                try {
+                    // Get the book ID from dataTransfer
+                    const bookId = e.dataTransfer.getData('text/plain');
+                    console.log("Book ID from dataTransfer:", bookId);
 
-                if (draggingBook) {
-                    // Get the book after which we should place the dragging book
-                    const x = e.clientX;
-                    const afterElement = getBookAfterDragPosition(shelf, x);
+                    // Find the dragging book
+                    const draggingBook = document.querySelector('.dragging');
 
-                    // Prepare all books for animation
-                    const allBooks = shelf.querySelectorAll('.book');
-                    allBooks.forEach(book => {
-                        // Apply smooth transition to all books
-                        book.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
-                    });
+                    if (draggingBook) {
+                        console.log("Found dragging book element");
 
-                    // Remove the book from its current position
-                    if (draggingBook.parentNode) {
-                        draggingBook.parentNode.removeChild(draggingBook);
-                    }
+                        // Get the book after which we should place the dragging book
+                        const x = e.clientX;
+                        const afterElement = getBookAfterDragPosition(shelf, x);
 
-                    // Make the dragged book stand out during placement
-                    draggingBook.style.opacity = '1';
-                    draggingBook.style.transform = 'translateY(-2px)';
+                        // Prepare all books for animation
+                        const allBooks = shelf.querySelectorAll('.book');
+                        allBooks.forEach(book => {
+                            // Apply smooth transition to all books
+                            book.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                        });
 
-                    // Add it to the new position
-                    if (afterElement) {
-                        shelf.insertBefore(draggingBook, afterElement);
-                    } else {
-                        shelf.appendChild(draggingBook);
-                    }
+                        // Remove the book from its current position
+                        if (draggingBook.parentNode) {
+                            draggingBook.parentNode.removeChild(draggingBook);
+                        }
 
-                    // Clean up all drop indicators throughout the document
-                    document.querySelectorAll('.drop-indicator').forEach(indicator => {
-                        indicator.remove();
-                    });
+                        // Make the dragged book stand out during placement
+                        draggingBook.style.opacity = '1';
+                        draggingBook.style.transform = 'translateY(-2px)';
 
-                    // Apply settle-in animation to the dropped book
-                    setTimeout(() => {
-                        draggingBook.style.transform = 'translateY(0)';
+                        // Add it to the new position
+                        if (afterElement) {
+                            shelf.insertBefore(draggingBook, afterElement);
+                            console.log("Inserted book before element");
+                        } else {
+                            shelf.appendChild(draggingBook);
+                            console.log("Appended book to end of shelf");
+                        }
 
-                        // Reset all transitions after animations complete
+                        // Clean up all drop indicators throughout the document
+                        document.querySelectorAll('.drop-indicator').forEach(indicator => {
+                            indicator.remove();
+                        });
+
+                        // Apply settle-in animation to the dropped book
                         setTimeout(() => {
-                            allBooks.forEach(book => {
-                                book.style.transition = '';
-                            });
-                            draggingBook.style.transition = '';
-                        }, 250);
-                    }, 50);
+                            draggingBook.style.transform = 'translateY(0)';
 
-                    // Save the new position for persistence
-                    saveBookshelfOrder();
+                            // Reset all transitions after animations complete
+                            setTimeout(() => {
+                                allBooks.forEach(book => {
+                                    book.style.transition = '';
+                                });
+                                draggingBook.style.transition = '';
+                            }, 250);
+                        }, 50);
+
+                        // Save the new position for persistence
+                        saveBookshelfOrder();
+                        console.log("Book drop completed successfully");
+                    } else {
+                        console.warn("No dragging book found on drop");
+                    }
+                } catch (error) {
+                    console.error("Error handling drop:", error);
                 }
             });
         });
@@ -1232,6 +1287,11 @@ document.addEventListener('DOMContentLoaded', function () {
      * Set up drag and drop functionality
      */
     function handleDragStart(e) {
+        console.log("Drag start event triggered");
+
+        // CRITICAL: Prevent default to avoid file chooser dialog
+        e.preventDefault();
+
         // Ensure this is a valid drag event
         if (!e.dataTransfer) {
             console.warn('Drag event without dataTransfer detected');
@@ -1260,17 +1320,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Set data for drag operation - important for cross-browser compatibility
         try {
             e.dataTransfer.effectAllowed = 'move';
+            // Use a simple string identifier (required for IE)
             e.dataTransfer.setData('text/plain', this.dataset.bookId || 'book');
-
-            // Try to set additional data - may fail in some browsers
-            try {
-                e.dataTransfer.setData('application/x-book', JSON.stringify({
-                    id: this.dataset.bookId,
-                    sourceShelf: this.parentNode.id
-                }));
-            } catch (err) {
-                console.warn('Could not set complex data type for drag operation');
-            }
         } catch (err) {
             console.error('Error setting drag data:', err);
         }
@@ -1279,16 +1330,14 @@ document.addEventListener('DOMContentLoaded', function () {
         this.style.opacity = '0.7';
         this.style.cursor = 'grabbing';
 
-        // Create an enhanced drag image
+        // Create a simpler drag image to prevent issues
         try {
             if (e.dataTransfer.setDragImage) {
-                // Clone the element for a custom drag image
-                const dragImage = this.cloneNode(true);
-                dragImage.style.transform = 'scale(0.9)';
-                dragImage.style.opacity = '0.8';
-                dragImage.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
-
-                // Temporarily add it to the DOM and position offscreen
+                const dragImage = document.createElement('div');
+                dragImage.style.width = this.offsetWidth + 'px';
+                dragImage.style.height = this.offsetHeight + 'px';
+                dragImage.style.backgroundColor = 'rgba(52, 152, 219, 0.6)';
+                dragImage.style.border = '2px solid rgba(52, 152, 219, 0.8)';
                 dragImage.style.position = 'absolute';
                 dragImage.style.top = '-9999px';
                 dragImage.style.left = '-9999px';
@@ -1297,12 +1346,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Use it as the drag image
                 e.dataTransfer.setDragImage(dragImage, 10, 10);
 
-                // Clean up after a short delay
+                // Clean up immediately
                 setTimeout(() => {
-                    if (dragImage.parentNode) {
-                        document.body.removeChild(dragImage);
-                    }
-                }, 0);
+                    document.body.removeChild(dragImage);
+                }, 10);
             }
         } catch (err) {
             console.warn('Custom drag image not supported:', err);
@@ -1320,8 +1367,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Prevent default browser behavior for images, etc.
-        e.stopPropagation();
+        console.log("Drag start handled successfully");
     }
 
     function handleDragEnd(e) {
@@ -1695,13 +1741,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Add event listeners for interaction and drag-and-drop
         book.addEventListener('click', function (e) {
+            // Don't show info panel when clicking resize handles
             if (e.target.classList.contains('resize-handle')) return;
+
+            // Check if we're in the middle of a drag
+            if (this.classList.contains('dragging') || this.classList.contains('mouse-active')) return;
+
             showBookInfoPanel(this, e.clientX, e.clientY);
         });
 
-        // Set up standard drag and drop event listeners
+        // Set up drag and drop event listeners with proper event handling
         book.addEventListener('dragstart', handleDragStart);
         book.addEventListener('dragend', handleDragEnd);
+
+        // Prevent default on dragover to ensure drop events work
+        book.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
 
         // Add touch event support for mobile devices
         book.addEventListener('touchstart', function(e) {
@@ -1721,6 +1778,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Add a class to mark this as actively being interacted with
             this.classList.add('mouse-active');
+
+            // Stop propagation to prevent parent elements from handling the event
+            e.stopPropagation();
         });
 
         // Reset visual feedback on mouse up
@@ -1735,6 +1795,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     this.style.transition = '';
                 }
             }, 100);
+
+            e.stopPropagation();
+        });
+
+        // Prevent text selection on double click
+        book.addEventListener('dblclick', function(e) {
+            e.preventDefault();
         });
     }
 

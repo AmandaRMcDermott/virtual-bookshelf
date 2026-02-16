@@ -559,7 +559,18 @@ button.apply:hover {
     cursor: grab;
     user-select: none;
     -webkit-user-drag: element;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     touch-action: none;
+    position: relative; /* Ensure proper stacking context */
+}
+
+.book[draggable=true] * {
+    /* Prevent children from being dragged separately */
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .book[draggable=true]:hover {
@@ -577,7 +588,7 @@ button.apply:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Make books more grabbable */
+/* Make books more grabbable with an overlay to prevent child elements from interfering */
 .book[draggable=true]::before {
     content: "";
     position: absolute;
@@ -585,7 +596,8 @@ button.apply:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1;
+    z-index: 5; /* Above other book elements but below resize handles */
+    cursor: grab;
 }
 
 /* Mobile device support for drag and drop */
