@@ -249,10 +249,29 @@ document.addEventListener('DOMContentLoaded', function () {
         // Get all shelf rows
         const shelfRows = document.querySelectorAll('.bookshelf-row');
 
+        // Track the active shelf to prevent flickering between shelves
+        let activeShelf = null;
+
+        // Set a small delay before responding to shelf changes
+        let shelfChangeTimeout = null;
+
         shelfRows.forEach(shelf => {
             // Add dragenter event for highlighting the shelf
             shelf.addEventListener('dragenter', function (e) {
                 e.preventDefault();
+
+                // Clear any pending timeouts
+                if (shelfChangeTimeout) {
+                    clearTimeout(shelfChangeTimeout);
+                }
+
+                // If we already have an active shelf, remove its highlight
+                if (activeShelf && activeShelf !== this) {
+                    activeShelf.classList.remove('drag-over');
+                }
+
+                // Set this as the active shelf
+                activeShelf = this;
                 this.classList.add('drag-over');
             });
 
@@ -260,8 +279,19 @@ document.addEventListener('DOMContentLoaded', function () {
             shelf.addEventListener('dragleave', function (e) {
                 // Only remove if we're actually leaving the shelf, not just entering a child element
                 if (e.currentTarget.contains(e.relatedTarget)) return;
-                this.classList.remove('drag-over');
+
+                // Set a small delay before removing the highlight to prevent flickering
+                shelfChangeTimeout = setTimeout(() => {
+                    this.classList.remove('drag-over');
+                    if (activeShelf === this) {
+                        activeShelf = null;
+                    }
+                }, 50);
             });
+
+            // Track the last update time to throttle updates
+            let lastIndicatorUpdate = 0;
+            const updateThreshold = 50; // Update at most every 50ms for performance
 
             // Add dragover event listener to each shelf
             shelf.addEventListener('dragover', function (e) {
@@ -274,24 +304,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Get the current horizontal position of the mouse
                 const x = e.clientX;
 
+                // Only update the indicator if enough time has passed since the last update
+                const now = Date.now();
+                if (now - lastIndicatorUpdate < updateThreshold) return;
+
+                lastIndicatorUpdate = now;
+
                 // Find the book after which we should place the dragging book
                 const afterElement = getBookAfterDragPosition(shelf, x);
 
-                // Remove previous drop indicators
-                document.querySelectorAll('.drop-indicator').forEach(indicator => {
-                    indicator.remove();
+                // Create or update the drop indicator using requestAnimationFrame for better performance
+                window.requestAnimationFrame(() => {
+                    // Check for existing indicator
+                    let indicator = document.querySelector('.drop-indicator');
+
+                    // Create indicator if it doesn't exist
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.className = 'drop-indicator';
+
+                        // Add smooth animation properties
+                        indicator.style.transition = 'all 0.1s ease-out';
+                    }
+
+                    // Remove the indicator from its current position if it exists in the DOM
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+
+                    // Position the indicator
+                    if (afterElement) {
+                        shelf.insertBefore(indicator, afterElement);
+                    } else {
+                        shelf.appendChild(indicator);
+                    }
                 });
-
-                // Create a drop indicator
-                const indicator = document.createElement('div');
-                indicator.className = 'drop-indicator';
-
-                // Add the drop indicator to the shelf
-                if (afterElement) {
-                    shelf.insertBefore(indicator, afterElement);
-                } else {
-                    shelf.appendChild(indicator);
-                }
             });
 
             // Add drop event listener
@@ -307,8 +354,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     const x = e.clientX;
                     const afterElement = getBookAfterDragPosition(shelf, x);
 
+                    // Prepare all books for animation
+                    const allBooks = shelf.querySelectorAll('.book');
+                    allBooks.forEach(book => {
+                        // Apply smooth transition to all books
+                        book.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                    });
+
                     // Remove the book from its current position
-                    draggingBook.parentNode.removeChild(draggingBook);
+                    if (draggingBook.parentNode) {
+                        draggingBook.parentNode.removeChild(draggingBook);
+                    }
+
+                    // Make the dragged book stand out during placement
+                    draggingBook.style.opacity = '1';
+                    draggingBook.style.transform = 'translateY(-2px)';
 
                     // Add it to the new position
                     if (afterElement) {
@@ -317,12 +377,25 @@ document.addEventListener('DOMContentLoaded', function () {
                         shelf.appendChild(draggingBook);
                     }
 
-                    // Remove drop indicators
+                    // Clean up all drop indicators throughout the document
                     document.querySelectorAll('.drop-indicator').forEach(indicator => {
                         indicator.remove();
                     });
 
-                    // Save the new position for persistence (could be implemented)
+                    // Apply settle-in animation to the dropped book
+                    setTimeout(() => {
+                        draggingBook.style.transform = 'translateY(0)';
+
+                        // Reset all transitions after animations complete
+                        setTimeout(() => {
+                            allBooks.forEach(book => {
+                                book.style.transition = '';
+                            });
+                            draggingBook.style.transition = '';
+                        }, 250);
+                    }, 50);
+
+                    // Save the new position for persistence
                     saveBookshelfOrder();
                 }
             });
@@ -422,18 +495,25 @@ document.addEventListener('DOMContentLoaded', function () {
         // Get all books in the shelf that aren't being dragged
         const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
 
-        return books.reduce((closest, book) => {
-            const box = book.getBoundingClientRect();
-            const offset = x - (box.left + box.width / 2);
+        // If there are no other books, return null (append to the end)
+        if (books.length === 0) return null;
 
-            // If offset is negative, we're to the left of the book
-            // If offset is smaller than the current closest, this book is closer
-            if (offset < 0 && offset > closest.offset) {
-                return { offset, element: book };
-            } else {
-                return closest;
+        // Find the first book that the cursor is positioned before
+        // This creates a more natural insertion point based on cursor position
+        for (const book of books) {
+            const box = book.getBoundingClientRect();
+
+            // If the cursor is before this book's right edge with a small buffer zone
+            // The buffer zone (25% of book width) creates a more natural transition point
+            const insertPosition = box.left + (box.width * 0.75);
+
+            if (x < insertPosition) {
+                return book;
             }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // If we're after all books, return null to place at the end
+        return null;
     }
 
     /**
@@ -1152,6 +1232,18 @@ document.addEventListener('DOMContentLoaded', function () {
      * Set up drag and drop functionality
      */
     function handleDragStart(e) {
+        // Clear any existing dragging elements first
+        document.querySelectorAll('.dragging').forEach(el => {
+            el.classList.remove('dragging');
+            el.setAttribute('aria-grabbed', 'false');
+            el.style.opacity = '1';
+        });
+
+        // Remove any existing drop indicators
+        document.querySelectorAll('.drop-indicator').forEach(indicator => {
+            indicator.remove();
+        });
+
         // Mark this element as being dragged
         this.classList.add('dragging');
         this.setAttribute('aria-grabbed', 'true');
@@ -1167,25 +1259,90 @@ document.addEventListener('DOMContentLoaded', function () {
             sourceShelf: this.parentNode.id
         }));
 
-        // Create a semi-transparent drag image
-        this.style.opacity = '0.4';
+        // Set a semi-transparent drag image
+        this.style.opacity = '0.7';
+
+        // Use a high-quality drag image for better user experience
+        if (e.dataTransfer.setDragImage) {
+            // Clone the element for a custom drag image
+            const dragImage = this.cloneNode(true);
+            dragImage.style.transform = 'scale(0.9)';
+            dragImage.style.opacity = '0.8';
+
+            // Temporarily add it to the DOM and position offscreen
+            dragImage.style.position = 'absolute';
+            dragImage.style.top = '-9999px';
+            dragImage.style.left = '-9999px';
+            document.body.appendChild(dragImage);
+
+            // Use it as the drag image
+            e.dataTransfer.setDragImage(dragImage, 10, 10);
+
+            // Clean up after a short delay
+            setTimeout(() => {
+                document.body.removeChild(dragImage);
+            }, 0);
+        }
     }
 
     function handleDragEnd(e) {
+        // Ensure all books are reset to normal appearance with smooth transitions
+        document.querySelectorAll('.book').forEach(book => {
+            book.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out';
+            book.style.opacity = '1';
+            book.style.transform = 'none';
+            book.style.boxShadow = '';
+            book.style.outline = '';
+            book.style.outlineOffset = '';
+        });
+
         // Remove dragging class and restore opacity
         this.classList.remove('dragging');
         this.setAttribute('aria-grabbed', 'false');
         this.style.opacity = '1';
 
-        // Remove all drop indicators
-        document.querySelectorAll('.drop-indicator').forEach(indicator => {
-            indicator.remove();
+        // Apply a more natural animation to show the book settling in place
+        // This creates a small bounce effect that feels more physically realistic
+        this.animate([
+            { transform: 'translateY(-4px)' },
+            { transform: 'translateY(1px)' },
+            { transform: 'translateY(0)' }
+        ], {
+            duration: 300,
+            easing: 'cubic-bezier(0.215, 0.610, 0.355, 1.000)' // Custom easing for a bouncy effect
         });
 
-        // Remove any active shelf highlights
+        // Remove all drop indicators with a fade-out effect
+        document.querySelectorAll('.drop-indicator').forEach(indicator => {
+            // Fade out the indicator before removing it
+            indicator.style.transition = 'opacity 0.2s ease-out';
+            indicator.style.opacity = '0';
+
+            // Remove after the fade-out animation
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 200);
+        });
+
+        // Remove any active shelf highlights with a smooth transition
         document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+            shelf.style.transition = 'background-color 0.3s ease-out, box-shadow 0.3s ease-out';
             shelf.classList.remove('drag-over');
         });
+
+        document.querySelectorAll('.removed-books-container').forEach(container => {
+            container.style.transition = 'background-color 0.3s ease-out, box-shadow 0.3s ease-out';
+            container.classList.remove('drag-over');
+        });
+
+        // Reset transitions after animations complete
+        setTimeout(() => {
+            document.querySelectorAll('.book').forEach(book => {
+                book.style.transition = '';
+            });
+        }, 300);
     }
 
     /**

@@ -487,39 +487,58 @@ button.apply:hover {
 
 /* Drop target indicators */
 .drop-indicator {
-    position: absolute;
+    position: relative;
     background-color: #3498db;
-    width: 3px;
-    top: 0;
-    bottom: 0;
-    transition: opacity 0.3s;
-    z-index: 5;
-    opacity: 0.7;
+    width: 6px;
+    height: 85%;
+    margin: auto 0;
+    align-self: center;
+    border-radius: 3px;
+    transition: all 0.15s ease-in-out;
+    z-index: 20;
+    opacity: 0.9;
     animation: pulse 1.5s infinite;
+    box-shadow: 0 0 12px rgba(52, 152, 219, 0.8);
+
+    /* Add a slight glow effect */
+    filter: drop-shadow(0 0 3px rgba(52, 152, 219, 0.7));
+
+    /* Ensure consistent vertical alignment */
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 @keyframes pulse {
     0% {
-        opacity: 0.4;
+        opacity: 0.7;
+        transform: translateY(-50%) scaleY(0.95);
     }
 
     50% {
-        opacity: 0.8;
+        opacity: 1;
+        transform: translateY(-50%) scaleY(1.05);
     }
 
     100% {
-        opacity: 0.4;
+        opacity: 0.7;
+        transform: translateY(-50%) scaleY(0.95);
     }
 }
 
 /* Dragging states */
 .book.dragging {
-    opacity: 0.7;
-    z-index: 10;
+    opacity: 0.85;
+    z-index: 100; /* Higher z-index to prevent overlapping issues */
     cursor: grabbing !important;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    transform: scale(1.05);
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    transform: scale(1.05) translateY(-5px);
+    position: relative; /* Ensure proper stacking context */
+    pointer-events: none; /* Allow hover events to pass through to elements underneath */
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+
+    /* Add subtle outline to make dragged book more distinguishable */
+    outline: 2px solid rgba(52, 152, 219, 0.6);
+    outline-offset: 2px;
 }
 
 /* Bookshelf row highlighting when dragging over */
