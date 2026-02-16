@@ -1,6 +1,7 @@
 /**
  * Virtual Bookshelf - Spine Integration Module
  * This module handles the integration of extracted book spine images into the virtual bookshelf.
+ * It works with spine images produced by the tools/spine_detection scripts.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -224,52 +225,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Add drag and drop event listeners to a book element
+     * Add drag and drop capabilities to a book element
      */
     function addDragListeners(book) {
-        book.addEventListener('dragstart', function (e) {
-            this.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', 'book');
-        });
+        // Use centralized drag and drop manager if available
+        if (typeof DragManager !== 'undefined') {
+            DragManager.makeBookDraggable(book);
+        } else {
+            // Fallback to basic drag functionality
+            book.draggable = true;
+            book.addEventListener('dragstart', function (e) {
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', 'book');
+            });
 
-        book.addEventListener('dragend', function () {
-            this.classList.remove('dragging');
-        });
+            book.addEventListener('dragend', function () {
+                this.classList.remove('dragging');
+            });
 
-        // Get the bookshelf element
-        const bookshelf = document.getElementById('main-bookshelf');
-
-        // Add dragover listener to the bookshelf
-        bookshelf.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            const afterElement = getDragAfterElement(bookshelf, e.clientX);
-            const draggable = document.querySelector('.dragging');
-            if (draggable) {
-                if (afterElement) {
-                    bookshelf.insertBefore(draggable, afterElement);
-                } else {
-                    bookshelf.appendChild(draggable);
-                }
-            }
-        });
-    }
-
-    /**
-     * Helper function to determine where to insert the dragged book
-     */
-    function getDragAfterElement(container, x) {
-        const draggableElements = [...container.querySelectorAll('.book:not(.dragging)')];
-
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = x - box.left - box.width / 2;
-
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+            console.warn('DragManager not found - using limited drag functionality');
+        }
     }
 
     /**

@@ -2,6 +2,9 @@
 
 import os
 import argparse
+import sys
+# Add the current directory to the path so we can import the local module
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from book_spine_detector import BookSpineDetector
 
 def main():

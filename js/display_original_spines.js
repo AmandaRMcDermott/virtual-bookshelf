@@ -1739,70 +1739,21 @@ document.addEventListener('DOMContentLoaded', function () {
         // Add book to shelf
         targetShelf.appendChild(book);
 
-        // Add event listeners for interaction and drag-and-drop
+        // Add click event for info panel
         book.addEventListener('click', function (e) {
-            // Don't show info panel when clicking resize handles
+            // Don't show info panel when clicking resize handles or during drag
             if (e.target.classList.contains('resize-handle')) return;
-
-            // Check if we're in the middle of a drag
             if (this.classList.contains('dragging') || this.classList.contains('mouse-active')) return;
 
             showBookInfoPanel(this, e.clientX, e.clientY);
         });
 
-        // Set up drag and drop event listeners with proper event handling
-        book.addEventListener('dragstart', handleDragStart);
-        book.addEventListener('dragend', handleDragEnd);
-
-        // Prevent default on dragover to ensure drop events work
-        book.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        // Add touch event support for mobile devices
-        book.addEventListener('touchstart', function(e) {
-            // Mark this book as being touched
-            this.classList.add('touch-active');
-        }, { passive: false });
-
-        // Add visual feedback on mouse down
-        book.addEventListener('mousedown', function(e) {
-            // Only respond to primary mouse button (left-click)
-            if (e.button !== 0) return;
-
-            // Add a visual effect to indicate the book is being grabbed
-            this.style.cursor = 'grabbing';
-            this.style.transform = 'scale(1.02)';
-            this.style.transition = 'transform 0.1s ease-out';
-
-            // Add a class to mark this as actively being interacted with
-            this.classList.add('mouse-active');
-
-            // Stop propagation to prevent parent elements from handling the event
-            e.stopPropagation();
-        });
-
-        // Reset visual feedback on mouse up
-        book.addEventListener('mouseup', function(e) {
-            this.style.cursor = '';
-            this.style.transform = '';
-            this.classList.remove('mouse-active');
-
-            // Allow a short delay before removing transition to ensure smooth animation
-            setTimeout(() => {
-                if (!this.classList.contains('mouse-active')) {
-                    this.style.transition = '';
-                }
-            }, 100);
-
-            e.stopPropagation();
-        });
-
-        // Prevent text selection on double click
-        book.addEventListener('dblclick', function(e) {
-            e.preventDefault();
-        });
+        // Use centralized drag and drop manager
+        if (typeof DragManager !== 'undefined') {
+            DragManager.makeBookDraggable(book);
+        } else {
+            console.warn('DragManager not found - drag and drop functionality may be limited');
+        }
     }
 
     /**
