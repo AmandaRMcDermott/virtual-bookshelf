@@ -1232,6 +1232,12 @@ document.addEventListener('DOMContentLoaded', function () {
      * Set up drag and drop functionality
      */
     function handleDragStart(e) {
+        // Ensure this is a valid drag event
+        if (!e.dataTransfer) {
+            console.warn('Drag event without dataTransfer detected');
+            return;
+        }
+
         // Clear any existing dragging elements first
         document.querySelectorAll('.dragging').forEach(el => {
             el.classList.remove('dragging');
@@ -1251,38 +1257,71 @@ document.addEventListener('DOMContentLoaded', function () {
         // Store the shelf this book came from
         this.dataset.sourceShelfId = this.parentNode.id;
 
-        // Set data for drag operation
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', this.dataset.bookId || '');
-        e.dataTransfer.setData('application/x-book', JSON.stringify({
-            id: this.dataset.bookId,
-            sourceShelf: this.parentNode.id
-        }));
+        // Set data for drag operation - important for cross-browser compatibility
+        try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.bookId || 'book');
 
-        // Set a semi-transparent drag image
-        this.style.opacity = '0.7';
-
-        // Use a high-quality drag image for better user experience
-        if (e.dataTransfer.setDragImage) {
-            // Clone the element for a custom drag image
-            const dragImage = this.cloneNode(true);
-            dragImage.style.transform = 'scale(0.9)';
-            dragImage.style.opacity = '0.8';
-
-            // Temporarily add it to the DOM and position offscreen
-            dragImage.style.position = 'absolute';
-            dragImage.style.top = '-9999px';
-            dragImage.style.left = '-9999px';
-            document.body.appendChild(dragImage);
-
-            // Use it as the drag image
-            e.dataTransfer.setDragImage(dragImage, 10, 10);
-
-            // Clean up after a short delay
-            setTimeout(() => {
-                document.body.removeChild(dragImage);
-            }, 0);
+            // Try to set additional data - may fail in some browsers
+            try {
+                e.dataTransfer.setData('application/x-book', JSON.stringify({
+                    id: this.dataset.bookId,
+                    sourceShelf: this.parentNode.id
+                }));
+            } catch (err) {
+                console.warn('Could not set complex data type for drag operation');
+            }
+        } catch (err) {
+            console.error('Error setting drag data:', err);
         }
+
+        // Set visual style for dragging
+        this.style.opacity = '0.7';
+        this.style.cursor = 'grabbing';
+
+        // Create an enhanced drag image
+        try {
+            if (e.dataTransfer.setDragImage) {
+                // Clone the element for a custom drag image
+                const dragImage = this.cloneNode(true);
+                dragImage.style.transform = 'scale(0.9)';
+                dragImage.style.opacity = '0.8';
+                dragImage.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+
+                // Temporarily add it to the DOM and position offscreen
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-9999px';
+                dragImage.style.left = '-9999px';
+                document.body.appendChild(dragImage);
+
+                // Use it as the drag image
+                e.dataTransfer.setDragImage(dragImage, 10, 10);
+
+                // Clean up after a short delay
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 0);
+            }
+        } catch (err) {
+            console.warn('Custom drag image not supported:', err);
+        }
+
+        // Add event to document to handle escape key canceling drag
+        document.addEventListener('keydown', function cancelDrag(event) {
+            if (event.key === 'Escape') {
+                // Cancel drag operation if possible
+                if (document.querySelector('.dragging')) {
+                    document.querySelector('.dragging').classList.remove('dragging');
+                    document.querySelector('.dragging').style.opacity = '1';
+                }
+                document.removeEventListener('keydown', cancelDrag);
+            }
+        });
+
+        // Prevent default browser behavior for images, etc.
+        e.stopPropagation();
     }
 
     function handleDragEnd(e) {
@@ -1610,6 +1649,9 @@ document.addEventListener('DOMContentLoaded', function () {
         book.setAttribute('draggable', 'true');
         book.setAttribute('aria-grabbed', 'false');
 
+        // Enable touch-based drag and drop for mobile devices
+        book.style.touchAction = 'none';
+
         // Calculate scaled dimensions
         const scaledWidth = Math.round(
             spineData.dimensions.width *
@@ -1637,6 +1679,7 @@ document.addEventListener('DOMContentLoaded', function () {
         img.src = spineData.imageSrc || `extracted_spines/your_bookspines/${spineData.fileName}`;
         img.alt = `Book spine ${spineData.fileName}`;
         img.className = 'spine-image';
+        img.draggable = false; // Prevent image dragging from interfering with book dragging
 
         // Add image to spine
         spine.appendChild(img);
@@ -1656,9 +1699,43 @@ document.addEventListener('DOMContentLoaded', function () {
             showBookInfoPanel(this, e.clientX, e.clientY);
         });
 
-        // Set up drag and drop functionality with enhanced attributes
+        // Set up standard drag and drop event listeners
         book.addEventListener('dragstart', handleDragStart);
         book.addEventListener('dragend', handleDragEnd);
+
+        // Add touch event support for mobile devices
+        book.addEventListener('touchstart', function(e) {
+            // Mark this book as being touched
+            this.classList.add('touch-active');
+        }, { passive: false });
+
+        // Add visual feedback on mouse down
+        book.addEventListener('mousedown', function(e) {
+            // Only respond to primary mouse button (left-click)
+            if (e.button !== 0) return;
+
+            // Add a visual effect to indicate the book is being grabbed
+            this.style.cursor = 'grabbing';
+            this.style.transform = 'scale(1.02)';
+            this.style.transition = 'transform 0.1s ease-out';
+
+            // Add a class to mark this as actively being interacted with
+            this.classList.add('mouse-active');
+        });
+
+        // Reset visual feedback on mouse up
+        book.addEventListener('mouseup', function(e) {
+            this.style.cursor = '';
+            this.style.transform = '';
+            this.classList.remove('mouse-active');
+
+            // Allow a short delay before removing transition to ensure smooth animation
+            setTimeout(() => {
+                if (!this.classList.contains('mouse-active')) {
+                    this.style.transition = '';
+                }
+            }, 100);
+        });
     }
 
     /**

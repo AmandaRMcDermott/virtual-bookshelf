@@ -557,11 +557,35 @@ button.apply:hover {
 /* Style for draggable books */
 .book[draggable=true] {
     cursor: grab;
+    user-select: none;
+    -webkit-user-drag: element;
+    touch-action: none;
 }
 
 .book[draggable=true]:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     z-index: 5;
+    transform: translateY(-2px);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* When actively interacting with book */
+.book.mouse-active,
+.book.touch-active {
+    cursor: grabbing !important;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Make books more grabbable */
+.book[draggable=true]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
 }
 
 /* Mobile device support for drag and drop */
