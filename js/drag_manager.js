@@ -199,10 +199,13 @@ const DragManager = (function() {
 
             // Dragover event
             shelf.addEventListener('dragover', function(e) {
-                e.preventDefault();
+                e.preventDefault(); // Necessary to allow dropping
                 e.stopPropagation();
 
                 e.dataTransfer.dropEffect = 'move';
+
+                // Log this event to help debugging
+                console.log('Dragover event on shelf: ' + this.id);
 
                 const draggingBook = document.querySelector('.dragging');
                 if (!draggingBook) return;
@@ -242,10 +245,14 @@ const DragManager = (function() {
                 e.preventDefault();
                 e.stopPropagation();
 
+                // Log the drop event
+                console.log('Drop event on shelf: ' + this.id);
+
+                // First remove the drag-over class
                 this.classList.remove('drag-over');
 
                 try {
-                    const bookId = e.dataTransfer.getData('text/plain');
+                    // Get the book ID from dataTransfer (useful for future improvements)
                     const draggingBook = document.querySelector('.dragging');
 
                     if (draggingBook) {
@@ -317,7 +324,7 @@ const DragManager = (function() {
                 e.preventDefault();
                 this.classList.remove('drag-over');
 
-                const bookId = e.dataTransfer.getData('text/plain');
+                // Get the book ID from dataTransfer (may be used in future enhancements)
                 const draggingBook = document.querySelector('.dragging');
 
                 if (draggingBook) {
@@ -340,13 +347,17 @@ const DragManager = (function() {
         _handleDragStart: function(e) {
             console.log('Drag start event triggered');
 
-            e.preventDefault();
+            // IMPORTANT: Do NOT preventDefault on dragstart
+            // We only stop propagation to prevent conflicts
             e.stopPropagation();
 
             if (!e.dataTransfer) {
                 console.warn('Drag event without dataTransfer detected');
                 return;
             }
+
+            // Ensure ghosting works correctly in all browsers
+            e.dataTransfer.effectAllowed = 'move';
 
             document.querySelectorAll('.dragging').forEach(el => {
                 el.classList.remove('dragging');
@@ -413,7 +424,7 @@ const DragManager = (function() {
          * Handle dragend event
          * @private
          */
-        _handleDragEnd: function(e) {
+        _handleDragEnd: function() {
             document.querySelectorAll('.book').forEach(book => {
                 book.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out';
                 book.style.opacity = '1';
@@ -489,5 +500,9 @@ const DragManager = (function() {
 
 // Initialize the DragManager when the DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    DragManager.init('#main-bookshelf');
+    const mainBookshelf = document.querySelector('#main-bookshelf');
+    if (mainBookshelf) {
+        DragManager.init('#main-bookshelf');
+    }
+    // The test page will initialize DragManager with its own selector
 });

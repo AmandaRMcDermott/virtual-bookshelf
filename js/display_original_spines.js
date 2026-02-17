@@ -5,6 +5,21 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Check if DragManager is loaded, if not - load it dynamically
+    if (typeof DragManager === 'undefined') {
+        console.log('DragManager not detected, loading it dynamically');
+        const script = document.createElement('script');
+        script.src = 'js/drag_manager.js';
+        script.onload = function() {
+            console.log('DragManager loaded dynamically');
+            // Initialize DragManager now that it's loaded
+            if (typeof DragManager !== 'undefined') {
+                DragManager.init('#main-bookshelf');
+            }
+        };
+        document.head.appendChild(script);
+    }
+
     // Prevent default drag behavior for images and links throughout the document
     // This is critical to prevent unwanted file dialog popups during drag operations
     document.addEventListener('dragstart', function(e) {
@@ -1748,11 +1763,22 @@ document.addEventListener('DOMContentLoaded', function () {
             showBookInfoPanel(this, e.clientX, e.clientY);
         });
 
-        // Use centralized drag and drop manager
-        if (typeof DragManager !== 'undefined') {
+        // EXCLUSIVELY use the centralized DragManager for all drag operations
+        if (typeof DragManager !== 'undefined' && DragManager.makeBookDraggable) {
+            // This is the ONLY place we should set up drag behavior
             DragManager.makeBookDraggable(book);
         } else {
             console.warn('DragManager not found - drag and drop functionality may be limited');
+
+            // Only add BASIC drag capabilities if DragManager isn't available
+            book.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.dataset.bookId || 'book');
+                this.classList.add('dragging');
+            });
+
+            book.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
         }
     }
 

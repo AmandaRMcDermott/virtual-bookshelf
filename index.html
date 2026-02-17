@@ -22,11 +22,50 @@
             display: flex;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
+            padding: 10px 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .bookshelf-row.drag-over {
+            background-color: #f5deb3;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
         .book.original-size {
             display: inline-block;
             flex-shrink: 0;
+        }
+
+        .book.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        /* Drop indicator for book positioning */
+        .drop-indicator {
+            position: absolute;
+            width: 4px;
+            background-color: #3498db;
+            display: none;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        /* Toggle button for resizing */
+        .toggle-button {
+            position: relative;
+            padding-left: 10px;
+            padding-right: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-button.active {
+            background-color: #27ae60;
+        }
+
+        .toggle-button.inactive {
+            background-color: #e74c3c;
         }
     </style>
 </head>
@@ -42,6 +81,7 @@
             <button id="clear-all-btn" title="Clear all loaded spines">Clear All</button>
             <button id="upload-local-btn" title="Upload spine images from your device">Upload Images</button>
             <button id="export-btn" title="Export bookshelf as image">Export Image</button>
+            <button id="toggle-resize-btn" title="Toggle individual book resizing" class="toggle-button active">Individual Resize: ON</button>
         </div>
     </header>
 
@@ -292,7 +332,9 @@
         }
     </style>
 
+    <!-- Make sure drag_manager.js loads FIRST as other scripts depend on it -->
     <script src="js/drag_manager.js"></script>
+    <!-- Only load these scripts after DragManager is initialized -->
     <script src="js/display_original_spines.js"></script>
     <script src="js/integrate_spine_images.js"></script>
     <script>
@@ -300,10 +342,99 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Virtual bookshelf app loaded successfully');
 
+            // Check saved resize toggle state (default is true)
+            try {
+                const savedResizeState = localStorage.getItem('individualResizeEnabled');
+                if (savedResizeState !== null) {
+                    dragDropConfig.individualResizeEnabled = savedResizeState === 'true';
+                }
+            } catch (e) {
+                console.error('Error loading resize toggle state:', e);
+            }
+
             // Ensure the bookshelf has the right class
             const bookshelf = document.getElementById('main-bookshelf');
             if (bookshelf) {
                 bookshelf.classList.add('bookshelf-original');
+            }
+
+            // Set up toggle resize button
+            const toggleResizeBtn = document.getElementById('toggle-resize-btn');
+            if (toggleResizeBtn) {
+                // Update button state based on current setting
+                updateToggleResizeButton();
+
+                // Apply initial state to resize handles
+                updateResizeHandlesVisibility();
+
+                // Add global event listener to prevent resize handle interactions when disabled
+                document.addEventListener('mousedown', function(e) {
+                    if (e.target.classList.contains('resize-handle') && !dragDropConfig.individualResizeEnabled) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Show a brief message that resizing is disabled
+                        const msg = document.createElement('div');
+                        msg.textContent = "Individual book resizing is disabled";
+                        msg.style.position = 'absolute';
+                        msg.style.top = (e.clientY + 20) + 'px';
+                        msg.style.left = (e.clientX + 10) + 'px';
+                        msg.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        msg.style.color = 'white';
+                        msg.style.padding = '8px 12px';
+                        msg.style.borderRadius = '4px';
+                        msg.style.fontSize = '14px';
+                        msg.style.zIndex = 1000;
+                        document.body.appendChild(msg);
+                        setTimeout(() => document.body.removeChild(msg), 2000);
+                    }
+                });
+
+                // Add click event listener
+                toggleResizeBtn.addEventListener('click', function() {
+                    // Toggle the state
+                    dragDropConfig.individualResizeEnabled = !dragDropConfig.individualResizeEnabled;
+
+                    // Update button appearance
+                    updateToggleResizeButton();
+
+                    // Update resize handles visibility
+                    updateResizeHandlesVisibility();
+
+                    // Save state to localStorage
+                    localStorage.setItem('individualResizeEnabled', dragDropConfig.individualResizeEnabled);
+                });
+            }
+
+            // Function to update toggle resize button appearance
+            function updateToggleResizeButton() {
+                if (!toggleResizeBtn) return;
+
+                toggleResizeBtn.textContent = dragDropConfig.individualResizeEnabled ?
+                    'Individual Resize: ON' : 'Individual Resize: OFF';
+
+                if (dragDropConfig.individualResizeEnabled) {
+                    toggleResizeBtn.classList.add('active');
+                    toggleResizeBtn.classList.remove('inactive');
+                } else {
+                    toggleResizeBtn.classList.remove('active');
+                    toggleResizeBtn.classList.add('inactive');
+                }
+            }
+
+            // Function to update resize handles visibility based on toggle state
+            function updateResizeHandlesVisibility() {
+                const resizeHandles = document.querySelectorAll('.resize-handle');
+                resizeHandles.forEach(handle => {
+                    handle.style.display = dragDropConfig.individualResizeEnabled ? '' : 'none';
+                });
+
+                // Update the resize tip message
+                const resizeTips = document.querySelectorAll('.resize-tip');
+                resizeTips.forEach(tip => {
+                    tip.textContent = dragDropConfig.individualResizeEnabled ?
+                        'Tip: You can directly resize this book using the blue handles that appear when hovering over it.' :
+                        'Individual book resizing is currently disabled. Enable it from the control panel.';
+                });
             }
 
             // Set up file upload functionality
@@ -311,6 +442,9 @@
 
             // Set up dimension controls
             setupDimensionControls();
+
+            // Set up shelf drag handlers
+            setupShelfDragHandlers();
 
             /**
              * Set up the file upload functionality
@@ -516,6 +650,13 @@
                 cornerHandle.className = 'resize-handle corner';
                 cornerHandle.dataset.resizeType = 'scale';
 
+                // Set initial visibility based on toggle state
+                if (!dragDropConfig.individualResizeEnabled) {
+                    rightHandle.style.display = 'none';
+                    bottomHandle.style.display = 'none';
+                    cornerHandle.style.display = 'none';
+                }
+
                 book.appendChild(rightHandle);
                 book.appendChild(bottomHandle);
                 book.appendChild(cornerHandle);
@@ -538,18 +679,23 @@
                     // (The main display_original_spines.js should handle this)
                 });
 
-                // Drag and drop functionality
+                // Enhanced drag and drop functionality
                 book.addEventListener('dragstart', function (e) {
+                    e.stopPropagation(); // Only prevent event bubbling
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setData('text/plain', JSON.stringify({
                         id: this.id || Date.now(),
                         sourceShelf: this.parentNode.id
                     }));
                     this.classList.add('dragging');
+
+                    // Store source shelf
+                    this.dataset.sourceShelf = this.parentNode.id;
                 });
 
-                book.addEventListener('dragend', function (e) {
+                book.addEventListener('dragend', function () {
                     this.classList.remove('dragging');
+                    VisualManager.hideIndicator(); // Hide indicator when drag ends
                 });
             }
 
@@ -687,7 +833,218 @@
                     bookshelf.appendChild(topShelf);
                     bookshelf.appendChild(middleShelf);
                     bookshelf.appendChild(bottomShelf);
+
+                    // Add drag and drop handlers to all shelves
+                    setupShelfDragHandlers();
                 }
+            }
+
+            /**
+             * Configuration for drag and drop functionality
+             */
+            const dragDropConfig = {
+                animation: {
+                    style: 'smooth',
+                    smoothDuration: '0.3s',
+                    smoothTiming: 'ease-out',
+                    smoothOffset: '-5px'
+                },
+                positionThreshold: 0.5, // 50% threshold for insertion
+                throttleDelay: 30, // Milliseconds for dragover throttling
+                individualResizeEnabled: true // Default is enabled
+            };
+
+            // Try to load saved resize toggle state
+            try {
+                const savedResizeState = localStorage.getItem('individualResizeEnabled');
+                if (savedResizeState !== null) {
+                    dragDropConfig.individualResizeEnabled = savedResizeState === 'true';
+                }
+            } catch (e) {
+                console.error('Error loading resize toggle state:', e);
+            }
+
+            // Create drop indicator element
+            const dropIndicator = document.createElement('div');
+            dropIndicator.classList.add('drop-indicator');
+            Object.assign(dropIndicator.style, {
+                position: 'absolute',
+                width: '4px',
+                backgroundColor: '#3498db',
+                display: 'none',
+                boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
+                zIndex: 1000
+            });
+            document.body.appendChild(dropIndicator);
+
+            // This function is already defined above, removing duplicate
+
+            // For dragover throttling
+            let lastDropIndicatorUpdateTime = 0;
+
+            /**
+             * Book Positioner - Handles determining where to insert books
+             */
+            const BookPositioner = {
+                // Calculate where to insert book based on cursor position
+                getInsertPosition(shelf, clientX) {
+                    const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
+
+                    if (books.length === 0) return null;
+
+                    for (const book of books) {
+                        const rect = book.getBoundingClientRect();
+                        // Using the threshold from config
+                        const insertPosition = rect.left + (rect.width * dragDropConfig.positionThreshold);
+
+                        if (clientX < insertPosition) {
+                            return book;
+                        }
+                    }
+
+                    return null;
+                }
+            };
+
+            /**
+             * Visual Manager - Handles drop indicator and animations
+             */
+            const VisualManager = {
+                hideIndicator() {
+                    dropIndicator.style.display = 'none';
+                },
+
+                // Update indicator position based on calculated insert position
+                updateDropIndicator(shelf, clientX) {
+                    // Throttle updates for performance
+                    const now = Date.now();
+                    if (now - lastDropIndicatorUpdateTime < dragDropConfig.throttleDelay) {
+                        return;
+                    }
+                    lastDropIndicatorUpdateTime = now;
+
+                    // Calculate insertion position
+                    const insertBeforeElement = BookPositioner.getInsertPosition(shelf, clientX);
+
+                    if (insertBeforeElement) {
+                        // Show indicator before the target book
+                        const rect = insertBeforeElement.getBoundingClientRect();
+                        dropIndicator.style.display = 'block';
+                        dropIndicator.style.height = `${rect.height}px`;
+                        dropIndicator.style.top = `${rect.top}px`;
+                        dropIndicator.style.left = `${rect.left - 2}px`;
+                    } else if (shelf.children.length > 0) {
+                        // Show indicator at the end of the shelf
+                        const lastBook = shelf.children[shelf.children.length - 1];
+                        const rect = lastBook.getBoundingClientRect();
+                        dropIndicator.style.display = 'block';
+                        dropIndicator.style.height = `${rect.height}px`;
+                        dropIndicator.style.top = `${rect.top}px`;
+                        dropIndicator.style.left = `${rect.right + 2}px`;
+                    } else {
+                        // Empty shelf - no indicator
+                        dropIndicator.style.display = 'none';
+                    }
+                },
+
+                // Apply animation to a book based on current animation style
+                animateBook(book) {
+                    if (dragDropConfig.animation.style === 'smooth') {
+                        book.style.transition = `transform ${dragDropConfig.animation.smoothDuration} ${dragDropConfig.animation.smoothTiming}`;
+                        book.style.transform = `translateY(${dragDropConfig.animation.smoothOffset})`;
+
+                        setTimeout(() => {
+                            book.style.transform = '';
+                            // Reset transition after animation completes
+                            setTimeout(() => {
+                                book.style.transition = '';
+                            }, parseFloat(dragDropConfig.animation.smoothDuration) * 1000);
+                        }, 10);
+                    } else {
+                        // Snap animation (instant)
+                        book.style.transition = 'none';
+                        book.style.transform = '';
+                    }
+                }
+            };
+
+            /**
+             * Set up drag and drop handlers for all shelves
+             */
+            function setupShelfDragHandlers() {
+                const shelves = document.querySelectorAll('.bookshelf-row');
+
+                shelves.forEach(shelf => {
+                    // Dragenter - highlight shelf
+                    shelf.addEventListener('dragenter', function(e) {
+                        e.preventDefault(); // Crucial for allowing drops
+                        shelf.classList.add('drag-over');
+                    });
+
+                    // Dragleave - remove highlight
+                    shelf.addEventListener('dragleave', function(e) {
+                        // Only remove highlight if really leaving this shelf
+                        // not just entering a child element
+                        if (!shelf.contains(e.relatedTarget)) {
+                            shelf.classList.remove('drag-over');
+                            VisualManager.hideIndicator();
+                        }
+                    });
+
+                    // Dragover - allow drop and update indicator
+                    shelf.addEventListener('dragover', function(e) {
+                        // Always prevent default to allow drops
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+
+                        // Update drop indicator position
+                        VisualManager.updateDropIndicator(this, e.clientX);
+                    });
+
+                    // Drop - handle the drop with position-aware insertion
+                    shelf.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        shelf.classList.remove('drag-over');
+                        VisualManager.hideIndicator();
+
+                        // Get the dragged book
+                        const draggingBook = document.querySelector('.dragging');
+                        if (draggingBook) {
+                            // Determine where to insert the book
+                            const insertBeforeElement = BookPositioner.getInsertPosition(this, e.clientX);
+
+                            // Move the book to this shelf
+                            const position = insertBeforeElement ?
+                                `before ${insertBeforeElement.textContent.trim() || 'another book'}` :
+                                'at end of shelf';
+                            console.log(`Moving book from ${draggingBook.dataset.sourceShelf || 'unknown'} to ${shelf.id || 'shelf'} ${position}`);
+
+                            // Remove from current location
+                            draggingBook.parentElement.removeChild(draggingBook);
+
+                            // Apply animation
+                            VisualManager.animateBook(draggingBook);
+
+                            // Add to new position in shelf
+                            if (insertBeforeElement) {
+                                shelf.insertBefore(draggingBook, insertBeforeElement);
+                            } else {
+                                shelf.appendChild(draggingBook);
+                            }
+                        }
+                    });
+                });
+
+                // Global event listeners for cleanup
+                document.addEventListener('dragend', function() {
+                    VisualManager.hideIndicator();
+                });
+
+                document.addEventListener('drop', function(e) {
+                    if (!e.target.closest('.bookshelf-row')) {
+                        VisualManager.hideIndicator();
+                    }
+                });
             }
         });
     </script>

@@ -271,17 +271,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Add drag and drop event listeners to a book element
+     * Add drag and drop capabilities to a book element using the DragManager
      */
     function addDragListeners(book) {
-        book.addEventListener('dragstart', function (e) {
-            this.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', 'book');
-        });
-
-        book.addEventListener('dragend', function () {
-            this.classList.remove('dragging');
-        });
+        // Use the centralized DragManager instead of adding individual listeners
+        if (typeof DragManager !== 'undefined' && DragManager.makeBookDraggable) {
+            DragManager.makeBookDraggable(book);
+        } else {
+            console.warn('DragManager not found. Drag and drop functionality may be limited.');
+            // Fallback to basic draggable attribute
+            book.draggable = true;
+        }
     }
 
     /**

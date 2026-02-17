@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplified Drag Test - Pragmatic Approach</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .shelf {
+            background-color: #d0a88d;
+            border: 5px solid #8b4513;
+            min-height: 200px;
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .book {
+            width: 40px;
+            height: 150px;
+            margin-right: 5px;
+            cursor: grab;
+            position: relative;
+        }
+
+        .book-red {
+            background-color: #e74c3c;
+        }
+
+        .book-green {
+            background-color: #2ecc71;
+        }
+
+        .book-blue {
+            background-color: #3498db;
+        }
+
+        .book.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .shelf.drag-over {
+            background-color: #f5deb3;
+        }
+
+        .drop-indicator {
+            position: absolute;
+            width: 4px;
+            background-color: #3498db;
+            display: none;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .book-label {
+            color: white;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-weight: bold;
+        }
+
+        .log-area {
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            font-family: monospace;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Drag and Drop Test</h1>
+    <p>Try to drag books between shelves and reorder them within shelves. Books can be placed anywhere, not just at the end.</p>
+
+    <div class="controls">
+        <button id="clear-log">Clear Log</button>
+        <button id="toggle-animation">Toggle Animation (Smooth)</button>
+        <button id="add-book">Add Random Book</button>
+    </div>
+
+    <div id="shelf-1" class="shelf">
+        <div class="book book-red" draggable="true">
+            <div class="book-label">Book 1</div>
+        </div>
+        <div class="book book-green" draggable="true">
+            <div class="book-label">Book 2</div>
+        </div>
+        <div class="book book-blue" draggable="true">
+            <div class="book-label">Book 3</div>
+        </div>
+    </div>
+
+    <div id="shelf-2" class="shelf">
+        <!-- This shelf starts empty -->
+    </div>
+
+    <h2>Event Log:</h2>
+    <div id="log" class="log-area"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main configuration and state
+            const config = {
+                animation: {
+                    style: 'smooth',
+                    smoothDuration: '0.3s',
+                    smoothTiming: 'ease-out',
+                    smoothOffset: '-5px'
+                },
+                positionThreshold: 0.5, // 50% threshold for insertion
+                throttleDelay: 30 // Milliseconds for dragover throttling
+            };
+
+            // Module for logging events
+            const Logger = {
+                logArea: document.getElementById('log'),
+
+                clear() {
+                    this.logArea.innerHTML = '';
+                },
+
+                log(message) {
+                    const entry = document.createElement('div');
+                    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                    this.logArea.appendChild(entry);
+                    this.logArea.scrollTop = this.logArea.scrollHeight;
+                }
+            };
+
+            // Module for handling book position calculations
+            const BookPositioner = {
+                // Calculate where to insert book based on cursor position
+                getInsertPosition(shelf, clientX) {
+                    const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
+
+                    if (books.length === 0) return null;
+
+                    for (const book of books) {
+                        const rect = book.getBoundingClientRect();
+                        // Using the threshold from config
+                        const insertPosition = rect.left + (rect.width * config.positionThreshold);
+
+                        if (clientX < insertPosition) {
+                            return book;
+                        }
+                    }
+
+                    return null;
+                }
+            };
+
+            // Module for visual feedback and animations
+            const VisualManager = {
+                dropIndicator: null,
+                lastUpdateTime: 0,
+
+                init() {
+                    // Create drop indicator element
+                    this.dropIndicator = document.createElement('div');
+                    this.dropIndicator.classList.add('drop-indicator');
+                    document.body.appendChild(this.dropIndicator);
+                },
+
+                hideIndicator() {
+                    this.dropIndicator.style.display = 'none';
+                },
+
+                // Update indicator position based on calculated insert position
+                updateDropIndicator(shelf, clientX) {
+                    // Throttle updates for performance
+                    const now = Date.now();
+                    if (now - this.lastUpdateTime < config.throttleDelay) {
+                        return;
+                    }
+                    this.lastUpdateTime = now;
+
+                    // Calculate insertion position
+                    const insertBeforeElement = BookPositioner.getInsertPosition(shelf, clientX);
+
+                    if (insertBeforeElement) {
+                        // Show indicator before the target book
+                        const rect = insertBeforeElement.getBoundingClientRect();
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.left - 2}px`;
+                    } else if (shelf.children.length > 0) {
+                        // Show indicator at the end of the shelf
+                        const lastBook = shelf.children[shelf.children.length - 1];
+                        const rect = lastBook.getBoundingClientRect();
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.right + 2}px`;
+                    } else {
+                        // Empty shelf - no indicator
+                        this.dropIndicator.style.display = 'none';
+                    }
+                },
+
+                // Apply animation to a book based on current animation style
+                animateBook(book) {
+                    if (config.animation.style === 'smooth') {
+                        book.style.transition = `transform ${config.animation.smoothDuration} ${config.animation.smoothTiming}`;
+                        book.style.transform = `translateY(${config.animation.smoothOffset})`;
+
+                        setTimeout(() => {
+                            book.style.transform = '';
+                            // Reset transition after animation completes
+                            setTimeout(() => {
+                                book.style.transition = '';
+                            }, parseFloat(config.animation.smoothDuration) * 1000);
+                        }, 10);
+                    } else {
+                        // Snap animation (instant)
+                        book.style.transition = 'none';
+                        book.style.transform = '';
+                    }
+                },
+
+                // Toggle animation style
+                toggleAnimationStyle() {
+                    config.animation.style = config.animation.style === 'smooth' ? 'snap' : 'smooth';
+                    return config.animation.style;
+                }
+            };
+
+            // Module for handling drag and drop operations
+            const DragDropManager = {
+                init() {
+                    // Set up existing books
+                    document.querySelectorAll('.book').forEach(book => {
+                        this.setupDraggableBook(book);
+                    });
+
+                    // Set up shelves
+                    document.querySelectorAll('.shelf').forEach(shelf => {
+                        this.setupDroppableShelf(shelf);
+                    });
+
+                    // Create observer for dynamically added books
+                    this.createBookObserver();
+
+                    // Global event listeners
+                    this.setupGlobalListeners();
+                },
+
+                setupDraggableBook(book) {
+                    if (book.hasAttribute('data-drag-initialized')) return;
+
+                    // Make images inside not draggable
+                    book.querySelectorAll('img').forEach(img => img.draggable = false);
+
+                    // Dragstart event
+                    book.addEventListener('dragstart', function(e) {
+                        Logger.log(`Dragstart on ${book.textContent.trim()}`);
+                        e.stopPropagation();
+
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', book.textContent.trim());
+
+                        book.classList.add('dragging');
+                        book.dataset.sourceShelf = book.parentElement.id;
+                    });
+
+                    // Dragend event
+                    book.addEventListener('dragend', function() {
+                        Logger.log(`Dragend on ${book.textContent.trim()}`);
+                        book.classList.remove('dragging');
+                        VisualManager.hideIndicator();
+                    });
+
+                    book.setAttribute('data-drag-initialized', 'true');
+                },
+
+                setupDroppableShelf(shelf) {
+                    // Dragenter - highlight shelf
+                    shelf.addEventListener('dragenter', function(e) {
+                        e.preventDefault();
+                        Logger.log(`Dragenter on ${shelf.id}`);
+                        shelf.classList.add('drag-over');
+                    });
+
+                    // Dragleave - remove highlight
+                    shelf.addEventListener('dragleave', function(e) {
+                        if (!shelf.contains(e.relatedTarget)) {
+                            Logger.log(`Dragleave on ${shelf.id}`);
+                            shelf.classList.remove('drag-over');
+                            VisualManager.hideIndicator();
+                        }
+                    });
+
+                    // Dragover - update drop indicator
+                    shelf.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        VisualManager.updateDropIndicator(this, e.clientX);
+                    });
+
+                    // Drop - handle position-aware insertion
+                    shelf.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        Logger.log(`Drop on ${shelf.id}`);
+                        shelf.classList.remove('drag-over');
+                        VisualManager.hideIndicator();
+
+                        const draggingBook = document.querySelector('.dragging');
+                        if (!draggingBook) return;
+
+                        // Determine insert position
+                        const insertBeforeElement = BookPositioner.getInsertPosition(this, e.clientX);
+
+                        // Log position info
+                        const position = insertBeforeElement ?
+                            `before ${insertBeforeElement.textContent.trim()}` :
+                            'at end of shelf';
+                        Logger.log(`Moving ${draggingBook.textContent.trim()} from ${draggingBook.dataset.sourceShelf} to ${shelf.id} ${position}`);
+
+                        // Remove from current location
+                        draggingBook.parentElement.removeChild(draggingBook);
+
+                        // Insert at new position
+                        if (insertBeforeElement) {
+                            shelf.insertBefore(draggingBook, insertBeforeElement);
+                        } else {
+                            shelf.appendChild(draggingBook);
+                        }
+
+                        // Apply animation
+                        VisualManager.animateBook(draggingBook);
+                    });
+                },
+
+                createBookObserver() {
+                    const self = this;
+                    const observer = new MutationObserver(mutations => {
+                        mutations.forEach(mutation => {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach(node => {
+                                    if (node.nodeType === 1 && node.classList.contains('book') && !node.hasAttribute('data-drag-initialized')) {
+                                        self.setupDraggableBook(node);
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('.shelf').forEach(shelf => {
+                        observer.observe(shelf, { childList: true });
+                    });
+                },
+
+                setupGlobalListeners() {
+                    // Prevent drops outside shelves
+                    document.addEventListener('dragover', function(e) {
+                        if (!e.target.closest('.shelf')) {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'none';
+                        }
+                    });
+
+                    // Hide indicator for drops outside shelves
+                    document.addEventListener('drop', function(e) {
+                        if (!e.target.closest('.shelf')) {
+                            e.preventDefault();
+                            VisualManager.hideIndicator();
+                        }
+                    });
+
+                    // Extra safety for indicator hiding
+                    document.addEventListener('dragend', function() {
+                        VisualManager.hideIndicator();
+                    });
+                }
+            };
+
+            // Module for UI controls
+            const UIControls = {
+                init() {
+                    // Clear log button
+                    document.getElementById('clear-log').addEventListener('click', function() {
+                        Logger.clear();
+                    });
+
+                    // Toggle animation style button
+                    document.getElementById('toggle-animation').addEventListener('click', function() {
+                        const newStyle = VisualManager.toggleAnimationStyle();
+                        this.textContent = `Toggle Animation (${newStyle.charAt(0).toUpperCase() + newStyle.slice(1)})`;
+                        Logger.log(`Animation style changed to: ${newStyle}`);
+                    });
+
+                    // Add random book button
+                    document.getElementById('add-book').addEventListener('click', function() {
+                        UIControls.addRandomBook();
+                    });
+                },
+
+                addRandomBook() {
+                    // Create random book
+                    const bookCount = document.querySelectorAll('.book').length + 1;
+                    const colors = ['red', 'green', 'blue', 'purple', 'orange', 'teal'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                    const book = document.createElement('div');
+                    book.className = `book book-${randomColor === 'red' || randomColor === 'green' || randomColor === 'blue' ? randomColor : ''}`;
+                    book.style.backgroundColor = randomColor === 'red' ? '#e74c3c' :
+                                               randomColor === 'green' ? '#2ecc71' :
+                                               randomColor === 'blue' ? '#3498db' :
+                                               randomColor === 'purple' ? '#9b59b6' :
+                                               randomColor === 'orange' ? '#f39c12' : '#1abc9c';
+                    book.draggable = true;
+
+                    const label = document.createElement('div');
+                    label.className = 'book-label';
+                    label.textContent = `Book ${bookCount}`;
+
+                    book.appendChild(label);
+
+                    // Add to first shelf
+                    const shelf = document.getElementById('shelf-1');
+                    shelf.appendChild(book);
+
+                    Logger.log(`Added new Book ${bookCount} to ${shelf.id}`);
+                }
+            };
+
+            // Initialize all modules
+            VisualManager.init();
+            DragDropManager.init();
+            UIControls.init();
+
+            Logger.log('Page initialized with pragmatic approach - ready for drag and drop testing');
+        });
+    </script>
+</body>
+</html>
