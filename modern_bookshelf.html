@@ -14,246 +14,388 @@
     <style>
         /* Main application styles */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Sets the default font for all text */
-            line-height: 1.6; /* Sets spacing between lines of text */
-            color: #333; /* Sets default text color to dark gray */
-            margin: 0; /* Removes default margin around the page */
-            padding: 0; /* Removes default padding around the page */
-            background-color: #f5f5f5; /* Light gray background for the entire page */
-            -webkit-font-smoothing: antialiased; /* Makes fonts look smoother on WebKit browsers */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Sets the default font for all text */
+            line-height: 1.6;
+            /* Sets spacing between lines of text */
+            color: #333;
+            /* Sets default text color to dark gray */
+            margin: 0;
+            /* Removes default margin around the page */
+            padding: 0;
+            /* Removes default padding around the page */
+            background-color: #f5f5f5;
+            /* Light gray background for the entire page */
+            -webkit-font-smoothing: antialiased;
+            /* Makes fonts look smoother on WebKit browsers */
         }
 
         header {
-            background-color: #34495e; /* Dark blue header background */
-            color: white; /* White text in the header */
-            padding: 1rem; /* Adds space inside the header */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow below the header */
+            background-color: #34495e;
+            /* Dark blue header background */
+            color: white;
+            /* White text in the header */
+            padding: 1rem;
+            /* Adds space inside the header */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Subtle shadow below the header */
         }
 
         header h1 {
-            margin: 0; /* Removes default margin around the h1 */
-            font-size: 1.8rem; /* Sets the size of the header text */
+            margin: 0;
+            /* Removes default margin around the h1 */
+            font-size: 1.8rem;
+            /* Sets the size of the header text */
         }
 
         .controls {
-            display: flex; /* Arranges child elements horizontally */
-            gap: 10px; /* Sets spacing between buttons */
-            margin-top: 10px; /* Adds space above the controls section */
-            flex-wrap: wrap; /* Allows buttons to wrap to next line on small screens */
+            display: flex;
+            /* Arranges child elements horizontally */
+            gap: 10px;
+            /* Sets spacing between buttons */
+            margin-top: 10px;
+            /* Adds space above the controls section */
+            flex-wrap: wrap;
+            /* Allows buttons to wrap to next line on small screens */
         }
 
         /* Top buttons */
         button {
-            padding: 8px 15px; /* Adds space inside buttons */
-            background-color: #3498db; /* Blue button background */
-            color: white; /* White text on buttons */
-            border: none; /* Removes default button border */
-            border-radius: 4px; /* Rounds button corners */
-            cursor: pointer; /* Shows hand cursor on hover */
-            transition: background-color 0.3s; /* Smooth color change animation */
+            padding: 8px 15px;
+            /* Adds space inside buttons */
+            background-color: #3498db;
+            /* Blue button background */
+            color: white;
+            /* White text on buttons */
+            border: none;
+            /* Removes default button border */
+            border-radius: 4px;
+            /* Rounds button corners */
+            cursor: pointer;
+            /* Shows hand cursor on hover */
+            transition: background-color 0.3s;
+            /* Smooth color change animation */
         }
 
         button:hover {
             /* background-color: #2980b9; /* Darker blue on hover (commented out) */
-            background-color: #57ce8cff; /* Green color on hover */
+            background-color: #57ce8cff;
+            /* Green color on hover */
         }
 
         main {
-            max-width: 1200px; /* Limits width of main content area */
-            margin: 0 auto; /* Centers content horizontally */
-            padding: 20px; /* Adds space inside the main content area */
+            max-width: 1200px;
+            /* Limits width of main content area */
+            margin: 0 auto;
+            /* Centers content horizontally */
+            padding: 20px;
+            /* Adds space inside the main content area */
         }
 
         footer {
-            text-align: center; /* Centers footer text */
-            padding: 1rem; /* Adds space inside the footer */
-            margin-top: 2rem; /* Adds space above the footer */
-            background-color: #34495e; /* Dark blue footer background (matches header) */
-            color: white; /* White text in footer */
+            text-align: center;
+            /* Centers footer text */
+            padding: 1rem;
+            /* Adds space inside the footer */
+            margin-top: 2rem;
+            /* Adds space above the footer */
+            background-color: #34495e;
+            /* Dark blue footer background (matches header) */
+            color: white;
+            /* White text in footer */
         }
 
         /* Bookshelf styles */
         .bookshelf-container {
-            margin-top: 20px; /* Adds space above the bookshelf */
+            margin-top: 20px;
+            /* Adds space above the bookshelf */
         }
 
         .bookshelf {
-            width: 100%; /* Makes bookshelf full width of container */
-            box-sizing: border-box; /* Includes padding and border in element width calculation */
+            width: 100%;
+            /* Makes bookshelf full width of container */
+            box-sizing: border-box;
+            /* Includes padding and border in element width calculation */
         }
 
         .bookshelf-row {
-            width: 100%; /* Makes shelf full width of container */
-            white-space: nowrap; /* Prevents text wrapping */
-            overflow-x: auto; /* Adds horizontal scrollbar if books overflow */
+            width: 100%;
+            /* Makes shelf full width of container */
+            white-space: nowrap;
+            /* Prevents text wrapping */
+            overflow-x: auto;
+            /* Adds horizontal scrollbar if books overflow */
             /* min-height: 180px; /* Commented out minimum height */
-            display: flex; /* Uses flexbox layout for books */
-            flex-direction: row !important; /* Forces horizontal arrangement of books */
-            flex-wrap: nowrap !important; /* Prevents books from wrapping to next line */
-            padding: 10px 5px; /* Adds space inside the shelf (top/bottom, left/right) */
-            border-radius: 5px; /* Rounds shelf corners */
-            margin-bottom: 20px; /* Adds space below each shelf */
-            background-color: #e0c8ad; /* Light brown shelf background */
-            border: 5px solid #8b4513; /* Dark brown shelf border */
-            transition: background-color 0.3s ease; /* Smooth color change animation */
-            position: relative; /* Required for absolute positioning of children */
-            align-items: flex-end; /* Aligns items to the bottom of the shelf */
-            min-height: 150px; /* Minimum height of shelf */
+            display: flex;
+            /* Uses flexbox layout for books */
+            flex-direction: row !important;
+            /* Forces horizontal arrangement of books */
+            flex-wrap: nowrap !important;
+            /* Prevents books from wrapping to next line */
+            /* padding: 10px 5px; */
+            padding: 8px 5px;
+            /* Adds space inside the shelf (top/bottom, left/right) */
+            border-radius: 5px;
+            /* Rounds shelf corners */
+            margin-bottom: 20px;
+            /* Adds space below each shelf */
+            background-color: #e0c8ad;
+            /* Light brown shelf background */
+            border: 5px solid #8b4513;
+            /* Dark brown shelf border */
+            transition: background-color 0.3s ease;
+            /* Smooth color change animation */
+            position: relative;
+            /* Required for absolute positioning of children */
+            align-items: flex-end;
+            /* Aligns items to the bottom of the shelf */
+            min-height: 150px;
+            /* Minimum height of shelf */
         }
 
         .bookshelf-row::before {
-            content: ''; /* Required for pseudo-elements */
-            position: absolute; /* Positions element relative to parent */
-            bottom: 0; /* Aligns to bottom of shelf */
-            left: 0; /* Aligns to left edge */
-            right: 0; /* Extends to right edge */
-            height: 15px; /* Height of the shelf front edge */
-            background-color: #8b4513; /* Dark brown color for shelf front */
-            border-radius: 0 0 5px 5px; /* Rounds bottom corners only */
-            z-index: 0; /* Places behind books */
+            content: '';
+            /* Required for pseudo-elements */
+            position: absolute;
+            /* Positions element relative to parent */
+            bottom: 0;
+            /* Aligns to bottom of shelf */
+            left: 0;
+            /* Aligns to left edge */
+            right: 0;
+            /* Extends to right edge */
+            height: 15px;
+            /* Height of the shelf front edge */
+            background-color: #8b4513;
+            /* Dark brown color for shelf front */
+            border-radius: 0 0 5px 5px;
+            /* Rounds bottom corners only */
+            z-index: 0;
+            /* Places behind books */
         }
 
         .bookshelf-row.drag-over {
-            background-color: #f5deb3; /* Lighter brown when dragging over (visual feedback) */
+            background-color: #f5deb3;
+            /* Lighter brown when dragging over (visual feedback) */
         }
 
         .book {
-            display: inline-flex; /* Displays as inline element with flex properties */
-            flex-shrink: 0; /* Prevents books from shrinking */
-            position: relative; /* Required for z-index to work */
-            touch-action: none; /* Prevents browser handling of drag-and-drop on touch */
-            cursor: grab; /* Hand cursor indicating draggable */
-            margin-right: 5px; /* Adds space between books */
-            margin-bottom: 0; /* Ensures no gap at bottom of books */
-            z-index: 1; /* Places books above shelf */
+            display: inline-flex;
+            /* Displays as inline element with flex properties */
+            flex-shrink: 0;
+            /* Prevents books from shrinking */
+            position: relative;
+            /* Required for z-index to work */
+            touch-action: none;
+            /* Prevents browser handling of drag-and-drop on touch */
+            cursor: grab;
+            /* Hand cursor indicating draggable */
+            margin-right: 0px;
+            /* Adds space between books */
+            margin-bottom: 0;
+            /* Ensures no gap at bottom of books */
+            z-index: 1;
+            /* Places books above shelf */
         }
 
         .book.dragging {
-            opacity: 0.7; /* Makes book semi-transparent while dragging */
-            cursor: grabbing; /* Changes cursor while actively dragging */
-            z-index: 1000; /* Places dragged book on top of everything */
+            opacity: 0.7;
+            /* Makes book semi-transparent while dragging */
+            cursor: grabbing;
+            /* Changes cursor while actively dragging */
+            z-index: 1000;
+            /* Places dragged book on top of everything */
         }
 
         .book:has(.handle) {
-            padding-inline-end: 100px; /* Adds padding to the end of books with handles */
+            padding-inline-end: 100px;
+            /* Adds padding to the end of books with handles */
         }
 
         .book:not(:has(.handle)) {
-            cursor: grab; /* Hand cursor for books without handles */
+            cursor: grab;
+            /* Hand cursor for books without handles */
         }
 
         .book[aria-grabbed="true"] .book[data-shadow] {
-            transform: scale(1.03); /* Slightly enlarges grabbed book */
-            backdrop-filter: blur(5px); /* Blurs content behind the book */
-            -webkit-backdrop-filter: blur(10px); /* Safari support for blur */
-            background-color: rgba(134, 134, 134, 0.9); /* Semi-transparent gray background */
+            transform: scale(1.03);
+            /* Slightly enlarges grabbed book */
+            backdrop-filter: blur(5px);
+            /* Blurs content behind the book */
+            -webkit-backdrop-filter: blur(10px);
+            /* Safari support for blur */
+            background-color: rgba(134, 134, 134, 0.9);
+            /* Semi-transparent gray background */
             box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5),
-                -1px 0 15px 0 rgba(34, 33, 81, 0.01), 0px 15px 15px 0 rgba(34, 33, 81, 0.25); /* Complex shadow effect */
+                -1px 0 15px 0 rgba(34, 33, 81, 0.01), 0px 15px 15px 0 rgba(34, 33, 81, 0.25);
+            /* Complex shadow effect */
         }
 
         .handle {
-            display: flex; /* Uses flexbox for layout */
-            width: 120px; /* Width of handle element */
-            padding: 15px; /* Adds space inside the handle */
-            align-items: center; /* Centers content vertically */
-            justify-content: center; /* Centers content horizontally */
-            flex: 0 0 auto; /* Prevents handle from growing or shrinking */
-            touch-action: none; /* Prevents browser handling of touch events */
-            cursor: grab; /* Hand cursor indicating draggable */
-            border-radius: 5px; /* Rounds handle corners */
-            border: none; /* Removes border */
-            outline: none; /* Removes outline */
-            appearance: none; /* Removes default browser styling */
-            background-color: transparent; /* Makes handle background transparent */
-            -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
-            user-select: none; /* Prevents text selection */
-            -webkit-user-select: none; /* Safari support for preventing text selection */
+            display: flex;
+            /* Uses flexbox for layout */
+            width: 120px;
+            /* Width of handle element */
+            padding: 15px;
+            /* Adds space inside the handle */
+            align-items: center;
+            /* Centers content vertically */
+            justify-content: center;
+            /* Centers content horizontally */
+            flex: 0 0 auto;
+            /* Prevents handle from growing or shrinking */
+            touch-action: none;
+            /* Prevents browser handling of touch events */
+            cursor: grab;
+            /* Hand cursor indicating draggable */
+            border-radius: 5px;
+            /* Rounds handle corners */
+            border: none;
+            /* Removes border */
+            outline: none;
+            /* Removes outline */
+            appearance: none;
+            /* Removes default browser styling */
+            background-color: transparent;
+            /* Makes handle background transparent */
+            -webkit-tap-highlight-color: transparent;
+            /* Removes tap highlight on mobile */
+            user-select: none;
+            /* Prevents text selection */
+            -webkit-user-select: none;
+            /* Safari support for preventing text selection */
         }
 
         .handle:hover,
         .handle:active {
-            background-color: rgba(201, 18, 18, 0.05); /* Very light red background on hover/active */
+            background-color: rgba(201, 18, 18, 0.05);
+            /* Very light red background on hover/active */
         }
 
         .handle:focus-visible {
-            outline: none; /* Removes default focus outline */
-            box-shadow: 0 0 0 20px rgba(105, 99, 171, 0), inset 0 0 0 2.5px #4c9ffe; /* Blue inner glow for focus */
+            outline: none;
+            /* Removes default focus outline */
+            box-shadow: 0 0 0 20px rgba(105, 99, 171, 0), inset 0 0 0 2.5px #4c9ffe;
+            /* Blue inner glow for focus */
         }
 
         .handle::before {
-            content: " "; /* Required for pseudo-elements */
-            display: block; /* Makes element a block */
-            width: 120px; /* Width of handle icon */
-            height: 120px; /* Height of handle icon */
-            flex-shrink: 0; /* Prevents icon from shrinking */
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%23919eab'/%3E%3C/svg%3E"); /* SVG drag handle icon */
-            background-size: contain; /* Scales icon to fit */
-            background-repeat: no-repeat; /* Prevents icon from repeating */
+            content: " ";
+            /* Required for pseudo-elements */
+            display: block;
+            /* Makes element a block */
+            width: 120px;
+            /* Width of handle icon */
+            height: 120px;
+            /* Height of handle icon */
+            flex-shrink: 0;
+            /* Prevents icon from shrinking */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%23919eab'/%3E%3C/svg%3E");
+            /* SVG drag handle icon */
+            background-size: contain;
+            /* Scales icon to fit */
+            background-repeat: no-repeat;
+            /* Prevents icon from repeating */
         }
 
         .handle:hover::before,
         .handle:active::before {
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%236f7b88'/%3E%3C/svg%3E"); /* Darker SVG icon on hover/active */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%236f7b88'/%3E%3C/svg%3E");
+            /* Darker SVG icon on hover/active */
         }
 
         .book-spine {
-            display: flex; /* Uses flexbox for layout */
-            align-items: center; /* Centers content vertically */
-            justify-content: center; /* Centers content horizontally */
-            position: relative; /* Required for z-index and positioning */
-            height: 150px; /* Height of the book spine */
-            width: 30px; /* Width of the book spine */
+            display: flex;
+            /* Uses flexbox for layout */
+            align-items: center;
+            /* Centers content vertically */
+            justify-content: center;
+            /* Centers content horizontally */
+            position: relative;
+            /* Required for z-index and positioning */
+            height: 150px;
+            /* Height of the book spine */
+            width: 30px;
+            /* Width of the book spine */
             /* background-color: #3498db; /* Blue background (commented out) */
-            color: white; /* White text color */
-            writing-mode: vertical-rl; /* Vertical text (right to left) */
-            text-orientation: mixed; /* Determines orientation of vertical text */
-            text-align: center; /* Centers text horizontally */
-            padding: 5px; /* Adds space inside the spine */
-            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3); /* Adds shadow for 3D effect */
-            margin-bottom: 0; /* Ensures spine sits flush with shelf bottom */
-            border-radius: 3px; /* Slightly rounds spine corners */
+            color: white;
+            /* White text color */
+            writing-mode: vertical-rl;
+            /* Vertical text (right to left) */
+            text-orientation: mixed;
+            /* Determines orientation of vertical text */
+            text-align: center;
+            /* Centers text horizontally */
+            /* padding: 5px; */
+            /* Adds space inside the spine */
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+            /* Adds shadow for 3D effect */
+            margin-bottom: 0;
+            /* Ensures spine sits flush with shelf bottom */
+            border-radius: 3px;
+            /* Slightly rounds spine corners */
         }
 
         .spine-image {
-            width: 100%; /* Makes image fill the spine width */
-            height: 100%; /* Makes image fill the spine height */
-            object-fit: cover; /* Scales image to cover area without distortion */
+            width: 100%;
+            /* Makes image fill the spine width */
+            height: 100%;
+            /* Makes image fill the spine height */
+            object-fit: cover;
+            /* Scales image to cover area without distortion */
         }
 
         /* Controls panel */
         .controls-panel {
-            background-color: #fff; /* White background for the panel */
-            border: 1px solid #ddd; /* Light gray border */
-            border-radius: 5px; /* Rounded corners */
-            padding: 15px; /* Space inside the panel */
-            margin-bottom: 20px; /* Space below the panel */
+            background-color: #fff;
+            /* White background for the panel */
+            border: 1px solid #ddd;
+            /* Light gray border */
+            border-radius: 5px;
+            /* Rounded corners */
+            padding: 15px;
+            /* Space inside the panel */
+            margin-bottom: 20px;
+            /* Space below the panel */
         }
 
         .controls-panel h3 {
-            margin-top: 0; /* Removes space above the heading */
+            margin-top: 0;
+            /* Removes space above the heading */
         }
 
         .control-group {
-            margin-bottom: 15px; /* Space below each control group */
+            margin-bottom: 15px;
+            /* Space below each control group */
         }
 
         .control-group label {
-            display: block; /* Makes label take full width */
-            margin-bottom: 5px; /* Space below the label */
-            font-weight: bold; /* Makes label text bold */
+            display: block;
+            /* Makes label take full width */
+            margin-bottom: 5px;
+            /* Space below the label */
+            font-weight: bold;
+            /* Makes label text bold */
         }
 
         .upload-control input[type="file"] {
-            display: none; /* Hides the default file input */
+            display: none;
+            /* Hides the default file input */
         }
 
         .select-button {
-            background-color: #3498db; /* Blue button background */
-            color: white; /* White text */
-            border: none; /* No border */
-            padding: 10px 20px; /* Space inside the button */
-            border-radius: 4px; /* Rounded corners */
-            cursor: pointer; /* Hand cursor on hover */
+            background-color: #3498db;
+            /* Blue button background */
+            color: white;
+            /* White text */
+            border: none;
+            /* No border */
+            padding: 10px 20px;
+            /* Space inside the button */
+            border-radius: 4px;
+            /* Rounded corners */
+            cursor: pointer;
+            /* Hand cursor on hover */
         }
     </style>
 </head>
@@ -297,6 +439,10 @@
     </footer>
 
     <script>
+        let booksState = {
+            shelves: {} // Will hold an object with shelf IDs as keys and arrays of book objects as values
+        };
+
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize the drag-and-drop functionality once the DOM is loaded
             initializeDragAndDrop();
@@ -329,6 +475,46 @@
 
         // Book counter for generating unique IDs
         let bookCounter = 1;
+
+        // After DOM loads, initialize the state from DOM or localStorage
+        function initializeBookState() {
+            const shelves = document.querySelectorAll('.bookshelf-row');
+
+            shelves.forEach(shelf => {
+                const shelfId = shelf.id;
+                booksState.shelves[shelfId] = [];
+
+                // Get all books in this shelf
+                const books = shelf.querySelectorAll('.book');
+                books.forEach(book => {
+                    // Extract book data
+                    const bookData = {
+                        id: book.id,
+                        title: book.querySelector('.book-spine').textContent || '',
+                        color: book.querySelector('.book-spine').style.backgroundColor || '',
+                        // Add other properties as needed
+                    };
+                    booksState.shelves[shelfId].push(bookData);
+                });
+            });
+
+            // Or initialize from localStorage if available
+            const savedState = localStorage.getItem('bookshelfState');
+            if (savedState) {
+                try {
+                    booksState = JSON.parse(savedState);
+                } catch (e) {
+                    console.error('Failed to parse saved state:', e);
+                }
+            }
+        }
+
+        // Update this function to save the full state
+        function saveBookshelfOrder() {
+            localStorage.setItem('bookshelfState', JSON.stringify(booksState));
+        }
+
+        console.log(booksState)
 
         /**
          * Initialize the drag and drop functionality
@@ -443,6 +629,50 @@
                 const draggedBook = document.getElementById(bookId);
 
                 if (draggedBook) {
+                    // // Get source and target shelf IDs
+                    // const sourceShelfId = draggedBook.dataset.sourceShelf;
+                    // const targetShelfId = shelf.id;
+
+                    // // First update our state model
+                    // let bookData;
+
+                    // // Find and remove book from source shelf in our state
+                    // if (booksState.shelves[sourceShelfId]) {
+                    //     const bookIndex = booksState.shelves[sourceShelfId].findIndex(b => b.id === bookId);
+                    //     if (bookIndex >= 0) {
+                    //         bookData = booksState.shelves[sourceShelfId][bookIndex];
+                    //         booksState.shelves[sourceShelfId].splice(bookIndex, 1);
+                    //     }
+                    // }
+
+                    // // Determine the index where the book should be inserted
+                    // const insertionPoint = getInsertionPoint(e.clientX, shelf);
+                    // let insertIndex = booksState.shelves[targetShelfId].length; // Default to end
+
+                    // if (insertionPoint) {
+                    //     // Find the index of the insertion point in our state array
+                    //     const books = Array.from(shelf.querySelectorAll('.book:not(.dragging)'));
+                    //     const insertionPointIndex = books.indexOf(insertionPoint);
+                    //     if (insertionPointIndex >= 0) {
+                    //         insertIndex = insertionPointIndex;
+                    //     }
+                    // }
+
+                    // // Insert book at the calculated position in our state
+                    // if (bookData) {
+                    //     booksState.shelves[targetShelfId].splice(insertIndex, 0, bookData);
+                    // }
+
+                    // // Now update the DOM
+                    // draggedBook.parentElement.removeChild(draggedBook);
+
+                    // if (insertionPoint) {
+                    //     shelf.insertBefore(draggedBook, insertionPoint);
+                    // } else {
+                    //     shelf.appendChild(draggedBook);
+                    // }
+
+                    // OLD CODE - Drag and drop doesn't work anymore after removing this
                     // Remove the book from its current location
                     draggedBook.parentElement.removeChild(draggedBook);
 
@@ -546,12 +776,39 @@
             // If there are no books in the shelf, return null (append to empty shelf)
             if (books.length === 0) return null;
 
-            // Find the first book whose middle point is to the right of the cursor
-            return books.find(book => {
+            // Calculate distance to midpoint of each book
+            const bookWithDistances = books.map(book => {
                 const rect = book.getBoundingClientRect();
-                const bookMiddle = rect.left + rect.width / 2; // Calculate middle point of the book
-                return clientX < bookMiddle; // Return true when cursor is to the left of book middle
+                const bookMiddle = rect.left + rect.width / 2;
+                const distance = Math.abs(clientX - bookMiddle);
+                return { book, distance };
             });
+
+            // Sort by distance
+            bookWithDistances.sort((a, b) => a.distance - b.distance);
+
+            // Get the closest book
+            const closest = bookWithDistances[0];
+
+            // If mouse is to the left of the middle, insert before; otherwise after
+            const closestRect = closest.book.getBoundingClientRect();
+            const closestMiddle = closestRect.left + closestRect.width / 2;
+
+            if (clientX < closestMiddle) {
+                return closest.book; // Insert before this book
+            } else {
+                // Find the next book to insert before, or null to append
+                const nextIndex = books.indexOf(closest.book) + 1;
+                return nextIndex < books.length ? books[nextIndex] : null;
+            }
+
+            // OLD CODE
+            // Find the first book whose middle point is to the right of the cursor
+            // return books.find(book => {
+            //     const rect = book.getBoundingClientRect();
+            //     const bookMiddle = rect.left + rect.width / 2; // Calculate middle point of the book
+            //     return clientX < bookMiddle; // Return true when cursor is to the left of book middle
+            // });
         }
 
         /**
