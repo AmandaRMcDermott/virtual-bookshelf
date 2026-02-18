@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!--
+    Virtual Bookshelf Application - Simplified Version
+
+    This application creates a digital bookshelf where users can:
+    - Display book spines in a visually appealing way
+    - Upload their own book spine images
+    - Arrange books by dragging and dropping them between shelves
+    - Adjust the global dimensions of all books
+
+    This version combines the main application structure from index.html with the
+    modular drag-and-drop implementation from simplified_drag_test.html for better
+    performance and maintainability.
+    -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Bookshelf - Simplified</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/original_spines.css">
+
+    <!-- CSS Styles -->
+    <style>
+        /* Main application styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #34495e;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+            background-color: #34495e;
+            color: white;
+        }
+
+        /* Bookshelf styles */
+        .bookshelf-container {
+            margin-top: 20px;
+        }
+
+        .bookshelf-original {
+            width: 100%;
+            box-sizing: border-box;
+            /* border: 1px solid #ddd; */
+            /* border-radius: 5px; */
+            /* padding: 10px; */
+            /* background-color: #fff; */
+        }
+
+        .bookshelf-row {
+            width: 100%;
+            white-space: nowrap;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            padding: 10px 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            /* background-color: #d0a88d; */
+            /* border: 5px solid #8b4513; */
+            /* margin-bottom: 20px; */
+            /* min-height: 150px; */
+            /* align-items: flex-end; */
+        }
+
+        .bookshelf-row.drag-over {
+            background-color: #f5deb3;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .book.original-size {
+            display: inline-block;
+            flex-shrink: 0;
+            cursor: grab;
+            /* position: relative; */
+            /* transition: transform 0.2s ease; */
+        }
+
+        .book.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .book-spine {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .spine-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Drop indicator for book positioning */
+        .drop-indicator {
+            position: absolute;
+            width: 4px;
+            background-color: #3498db;
+            display: none;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        /* Controls panel */
+        .controls-panel {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: height 0.3s ease-out;
+        }
+
+        .controls-panel.collapsed .controls-content {
+            display: none;
+        }
+
+        .collapse-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .controls-content {
+            margin-top: 10px;
+            transition: opacity 0.3s ease;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 5px;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .reset {
+            background-color: #95a5a6;
+        }
+
+        .reset:hover {
+            background-color: #7f8c8d;
+        }
+
+        .apply {
+            background-color: #2ecc71;
+        }
+
+        .apply:hover {
+            background-color: #27ae60;
+        }
+
+        /* File upload dialog */
+        .upload-dialog {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .upload-dialog-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .upload-dialog-header h3 {
+            margin: 0;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close-button:hover {
+            color: #333;
+        }
+
+        .upload-control {
+            margin: 20px 0;
+        }
+
+        .upload-control input[type="file"] {
+            display: none;
+        }
+
+        .select-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .select-button:hover {
+            background-color: #2980b9;
+        }
+
+        .selected-files-list {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .selected-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .selected-file-item:last-child {
+            border-bottom: none;
+        }
+
+        .upload-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .upload-actions button {
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cancel-button {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+        }
+
+        .cancel-button:hover {
+            background-color: #7f8c8d;
+        }
+
+        .confirm-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+        }
+
+        .confirm-button:hover {
+            background-color: #27ae60;
+        }
+
+        /* Log area for debugging - normally hidden */
+        .log-area {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            font-family: monospace;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Virtual Bookshelf</h1>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search books...">
+                <button id="search-btn">Search</button>
+            </div>
+            <button id="clear-all-btn" title="Clear all loaded spines">Clear All</button>
+            <button id="upload-local-btn" title="Upload spine images from your device">Upload Images</button>
+            <button id="export-btn" title="Export bookshelf as image">Export Image</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- File Upload Dialog (Hidden by default) -->
+        <div id="upload-dialog" class="upload-dialog">
+            <div class="upload-dialog-content">
+                <div class="upload-dialog-header">
+                    <h3>Upload Book Spine Images</h3>
+                    <button id="close-upload-dialog" class="close-button">&times;</button>
+                </div>
+                <div class="upload-dialog-body">
+                    <p>Select image files from your device to use as book spines:</p>
+                    <div class="upload-control">
+                        <input type="file" id="spine-file-input" multiple accept="image/*">
+                        <button id="select-files-btn" class="select-button">Choose Files</button>
+                    </div>
+                    <div id="selected-files-list" class="selected-files-list">
+                        <p>No files selected</p>
+                    </div>
+                    <div class="upload-actions">
+                        <button id="cancel-upload" class="cancel-button">Cancel</button>
+                        <button id="confirm-upload" class="confirm-button">Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bookshelf-container">
+            <h2>My Bookshelf</h2>
+            <p>Displaying spine images with their original dimensions (scaled down for viewing)</p>
+
+            <!-- Book Dimensions Control Panel -->
+            <div class="controls-panel" id="dimensions-controls">
+                <h3>Adjust Book Dimensions</h3>
+                <button class="collapse-toggle" id="collapse-toggle" title="Collapse/Expand">▼</button>
+
+                <div class="controls-content">
+                    <div class="control-group">
+                        <label for="scale-factor">Scaling Factor: <span id="scale-value">25%</span></label>
+                        <input type="range" id="scale-factor" min="10" max="100" value="25" step="5">
+                        <div class="value-display">Smaller ⟷ Larger</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="height-factor">Height Adjustment: <span id="height-value">100%</span></label>
+                        <input type="range" id="height-factor" min="50" max="200" value="100" step="10">
+                        <div class="value-display">Shorter ⟷ Taller</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="width-factor">Width Adjustment: <span id="width-value">100%</span></label>
+                        <input type="range" id="width-factor" min="50" max="200" value="100" step="10">
+                        <div class="value-display">Thinner ⟷ Thicker</div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="reset" id="reset-dimensions">Reset to Default</button>
+                        <button class="apply" id="apply-dimensions">Apply Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bookshelf bookshelf-original" id="main-bookshelf">
+                <!-- Books will be dynamically added here -->
+            </div>
+        </div>
+
+        <!-- Debug log area - hidden by default -->
+        <div id="log" class="log-area"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Virtual Bookshelf - Organize Your Collection</p>
+    </footer>
+    <script src="js/display_original_spines.js"></script>
+    <script>
+        /**
+         * Virtual Bookshelf Application - Simplified Version
+         *
+         * This script combines the main functionality from index.html with the
+         * modular drag-and-drop implementation from simplified_drag_test.html
+         * for better performance and maintainability.
+         */
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Virtual bookshelf app loaded successfully');
+
+            // Main configuration for the application
+            const config = {
+                animation: {
+                    style: 'smooth',
+                    smoothDuration: '0.3s',
+                    smoothTiming: 'ease-out',
+                    smoothOffset: '-5px'
+                },
+                positionThreshold: 0.5, // 50% threshold for insertion
+                throttleDelay: 30 // Milliseconds for dragover throttling
+            };
+
+            // Ensure the bookshelf has the right class
+            const bookshelf = document.getElementById('main-bookshelf');
+            if (bookshelf) {
+                bookshelf.classList.add('bookshelf-original');
+            }
+
+            // Initialize application components
+            setupFileUpload();
+            setupDimensionControls();
+            setupShelfDragHandlers();
+
+            // Optionally enable debug logging
+            const Logger = {
+                logArea: document.getElementById('log'),
+                enabled: false, // Set to true to show debug logs
+
+                enable() {
+                    this.enabled = true;
+                    this.logArea.style.display = 'block';
+                },
+
+                clear() {
+                    this.logArea.innerHTML = '';
+                },
+
+                log(message) {
+                    if (!this.enabled) return;
+                    const entry = document.createElement('div');
+                    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                    this.logArea.appendChild(entry);
+                    this.logArea.scrollTop = this.logArea.scrollHeight;
+                }
+            };
+
+            /**
+             * Book Positioner - Handles determining where to insert books
+             *
+             * Calculates the optimal insertion position for books during
+             * drag and drop operations based on cursor position.
+             */
+            const BookPositioner = {
+                // Calculate where to insert book based on cursor position
+                getInsertPosition(shelf, clientX) {
+                    const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
+
+                    if (books.length === 0) return null;
+
+                    for (const book of books) {
+                        const rect = book.getBoundingClientRect();
+                        // Using the threshold from config
+                        const insertPosition = rect.left + (rect.width * config.positionThreshold);
+
+                        if (clientX < insertPosition) {
+                            return book;
+                        }
+                    }
+
+                    return null;
+                }
+            };
+
+            /**
+             * Visual Manager - Handles drop indicator and animations
+             *
+             * This component is responsible for:
+             * - Creating and managing the visual drop indicator
+             * - Providing visual feedback during drag operations
+             * - Animating books when they're dropped into a new position
+             * - Throttling visual updates for better performance
+             */
+            const VisualManager = {
+                dropIndicator: null,
+                lastUpdateTime: 0,
+
+                init() {
+                    // Create drop indicator element
+                    this.dropIndicator = document.createElement('div');
+                    this.dropIndicator.classList.add('drop-indicator');
+                    document.body.appendChild(this.dropIndicator);
+                },
+
+                hideIndicator() {
+                    this.dropIndicator.style.display = 'none';
+                },
+
+                // Update indicator position based on calculated insert position
+                updateDropIndicator(shelf, clientX) {
+                    // Throttle updates for performance
+                    const now = Date.now();
+                    if (now - this.lastUpdateTime < config.throttleDelay) {
+                        return;
+                    }
+                    this.lastUpdateTime = now;
+
+                    // Calculate insertion position
+                    const insertBeforeElement = BookPositioner.getInsertPosition(shelf, clientX);
+
+                    if (insertBeforeElement) {
+                        // Show indicator before the target book
+                        const rect = insertBeforeElement.getBoundingClientRect();
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.left - 2}px`;
+                    } else if (shelf.children.length > 0) {
+                        // Show indicator at the end of the shelf
+                        const lastBook = shelf.children[shelf.children.length - 1];
+                        const rect = lastBook.getBoundingClientRect();
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.right + 2}px`;
+                    } else {
+                        // Empty shelf - no indicator
+                        this.dropIndicator.style.display = 'none';
+                    }
+                },
+
+                // Apply animation to a book based on current animation style
+                animateBook(book) {
+                    if (config.animation.style === 'smooth') {
+                        book.style.transition = `transform ${config.animation.smoothDuration} ${config.animation.smoothTiming}`;
+                        book.style.transform = `translateY(${config.animation.smoothOffset})`;
+
+                        setTimeout(() => {
+                            book.style.transform = '';
+                            // Reset transition after animation completes
+                            setTimeout(() => {
+                                book.style.transition = '';
+                            }, parseFloat(config.animation.smoothDuration) * 1000);
+                        }, 10);
+                    } else {
+                        // Snap animation (instant)
+                        book.style.transition = 'none';
+                        book.style.transform = '';
+                    }
+                }
+            };
+
+            /**
+             * DragDrop Manager - Centralizes drag and drop operations
+             *
+             * This component handles all aspects of book dragging and dropping:
+             * - Sets up books to be draggable with appropriate event handlers
+             * - Configures shelves to accept dropped books
+             * - Creates a MutationObserver to handle dynamically added books
+             * - Manages global event listeners for drag and drop operations
+             */
+            const DragDropManager = {
+                init() {
+                    // Set up existing books
+                    document.querySelectorAll('.book').forEach(book => {
+                        this.setupDraggableBook(book);
+                    });
+
+                    // Set up shelves
+                    document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                        this.setupDroppableShelf(shelf);
+                    });
+
+                    // Create observer for dynamically added books
+                    this.createBookObserver();
+
+                    // Global event listeners
+                    this.setupGlobalListeners();
+                },
+
+                setupDraggableBook(book) {
+                    if (book.hasAttribute('data-drag-initialized')) return;
+
+                    // Make images inside not draggable
+                    book.querySelectorAll('img').forEach(img => img.draggable = false);
+
+                    // Dragstart event
+                    book.addEventListener('dragstart', function (e) {
+                        e.stopPropagation();
+                        Logger.log(`Dragstart on book ${book.dataset.bookId || 'unknown'}`);
+
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', book.dataset.bookId || 'book');
+
+                        book.classList.add('dragging');
+                        book.dataset.sourceShelf = book.parentElement.id;
+                    });
+
+                    // Dragend event
+                    book.addEventListener('dragend', function () {
+                        Logger.log(`Dragend on book ${book.dataset.bookId || 'unknown'}`);
+                        book.classList.remove('dragging');
+                        VisualManager.hideIndicator();
+                    });
+
+                    book.setAttribute('data-drag-initialized', 'true');
+                },
+
+                setupDroppableShelf(shelf) {
+                    // Dragenter - highlight shelf
+                    shelf.addEventListener('dragenter', function (e) {
+                        e.preventDefault();
+                        Logger.log(`Dragenter on ${shelf.id || 'shelf'}`);
+                        shelf.classList.add('drag-over');
+                    });
+
+                    // Dragleave - remove highlight
+                    shelf.addEventListener('dragleave', function (e) {
+                        if (!shelf.contains(e.relatedTarget)) {
+                            Logger.log(`Dragleave on ${shelf.id || 'shelf'}`);
+                            shelf.classList.remove('drag-over');
+                            VisualManager.hideIndicator();
+                        }
+                    });
+
+                    // Dragover - update drop indicator
+                    shelf.addEventListener('dragover', function (e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        VisualManager.updateDropIndicator(this, e.clientX);
+                    });
+
+                    // Drop - handle position-aware insertion
+                    shelf.addEventListener('drop', function (e) {
+                        e.preventDefault();
+                        Logger.log(`Drop on ${shelf.id || 'shelf'}`);
+                        shelf.classList.remove('drag-over');
+                        VisualManager.hideIndicator();
+
+                        const draggingBook = document.querySelector('.dragging');
+                        if (!draggingBook) return;
+
+                        // Determine insert position
+                        const insertBeforeElement = BookPositioner.getInsertPosition(this, e.clientX);
+
+                        // Log position info
+                        const position = insertBeforeElement ?
+                            `before ${insertBeforeElement.dataset.bookId || 'another book'}` :
+                            'at end of shelf';
+                        Logger.log(`Moving book from ${draggingBook.dataset.sourceShelf || 'unknown'} to ${shelf.id || 'shelf'} ${position}`);
+
+                        // Remove from current location
+                        draggingBook.parentElement.removeChild(draggingBook);
+
+                        // Insert at new position
+                        if (insertBeforeElement) {
+                            shelf.insertBefore(draggingBook, insertBeforeElement);
+                        } else {
+                            shelf.appendChild(draggingBook);
+                        }
+
+                        // Apply animation
+                        VisualManager.animateBook(draggingBook);
+
+                        // Save bookshelf order for persistence
+                        saveBookshelfOrder();
+                    });
+                },
+
+                createBookObserver() {
+                    const self = this;
+                    const observer = new MutationObserver(mutations => {
+                        mutations.forEach(mutation => {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach(node => {
+                                    if (node.nodeType === 1 && node.classList.contains('book') && !node.hasAttribute('data-drag-initialized')) {
+                                        self.setupDraggableBook(node);
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                        observer.observe(shelf, { childList: true });
+                    });
+                },
+
+                setupGlobalListeners() {
+                    // Prevent drops outside shelves
+                    document.addEventListener('dragover', function (e) {
+                        if (!e.target.closest('.bookshelf-row')) {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'none';
+                        }
+                    });
+
+                    // Hide indicator for drops outside shelves
+                    document.addEventListener('drop', function (e) {
+                        if (!e.target.closest('.bookshelf-row')) {
+                            e.preventDefault();
+                            VisualManager.hideIndicator();
+                        }
+                    });
+
+                    // Extra safety for indicator hiding
+                    document.addEventListener('dragend', function () {
+                        VisualManager.hideIndicator();
+                    });
+                }
+            };
+
+            /**
+             * Set up drag and drop handlers for all shelves
+             *
+             * This function initializes the drag and drop functionality by:
+             * - Setting up the VisualManager to provide visual feedback during drag operations
+             * - Initializing the DragDropManager to handle all book drag and drop functionality
+             */
+            function setupShelfDragHandlers() {
+                // Initialize the Visual Manager first
+                VisualManager.init();
+
+                // Initialize the DragDropManager to handle all drag and drop operations
+                DragDropManager.init();
+            }
+
+            /**
+             * Set up the file upload functionality
+             */
+            function setupFileUpload() {
+                const uploadBtn = document.getElementById('upload-local-btn');
+                const uploadDialog = document.getElementById('upload-dialog');
+                const closeDialog = document.getElementById('close-upload-dialog');
+                const cancelUpload = document.getElementById('cancel-upload');
+                const fileInput = document.getElementById('spine-file-input');
+                const selectFilesBtn = document.getElementById('select-files-btn');
+                const selectedFilesList = document.getElementById('selected-files-list');
+                const confirmUpload = document.getElementById('confirm-upload');
+
+                // Show upload dialog when upload button is clicked
+                uploadBtn.addEventListener('click', function () {
+                    uploadDialog.style.display = 'block';
+                });
+
+                // Close dialog when close button is clicked
+                closeDialog.addEventListener('click', function () {
+                    uploadDialog.style.display = 'none';
+                });
+
+                // Close dialog when cancel button is clicked
+                cancelUpload.addEventListener('click', function () {
+                    uploadDialog.style.display = 'none';
+                });
+
+                // Open file selector when select button is clicked
+                selectFilesBtn.addEventListener('click', function () {
+                    fileInput.click();
+                });
+
+                // Handle file selection
+                fileInput.addEventListener('change', function () {
+                    const files = this.files;
+
+                    if (files.length > 0) {
+                        // Clear previous file list
+                        selectedFilesList.innerHTML = '';
+
+                        // Display selected files
+                        Array.from(files).forEach(file => {
+                            const fileItem = document.createElement('div');
+                            fileItem.className = 'selected-file-item';
+                            fileItem.innerHTML = `
+                                <span>${file.name}</span>
+                                <span>${(file.size / 1024).toFixed(1)} KB</span>
+                            `;
+                            selectedFilesList.appendChild(fileItem);
+                        });
+                    } else {
+                        selectedFilesList.innerHTML = '<p>No files selected</p>';
+                    }
+                });
+
+                // Handle upload confirmation
+                confirmUpload.addEventListener('click', function () {
+                    const files = fileInput.files;
+
+                    if (files && files.length > 0) {
+                        // Call the function to process the selected files
+                        processLocalSpineImages(files);
+
+                        // Close the dialog
+                        uploadDialog.style.display = 'none';
+                    }
+                });
+
+                // Close dialog when clicking outside the dialog content
+                window.addEventListener('click', function (event) {
+                    if (event.target === uploadDialog) {
+                        uploadDialog.style.display = 'none';
+                    }
+                });
+            }
+
+            /**
+             * Process local spine images
+             *
+             * This function takes images uploaded by the user and:
+             * - Creates temporary object URLs for each image
+             * - Loads each image to determine its dimensions
+             * - Creates book spine elements with appropriate sizing
+             * - Adds the spine images to the bookshelf with proper event handlers
+             *
+             * @param {FileList} files - The selected image files from the file input
+             */
+            function processLocalSpineImages(files) {
+                // Create temporary URLs for the selected files
+                const spineImages = Array.from(files).map(file => {
+                    return {
+                        fileName: file.name,
+                        url: URL.createObjectURL(file),
+                        size: file.size
+                    };
+                });
+
+                // Clear existing bookshelf if needed
+                const clearExisting = true; // Set to false if you want to add to existing books
+                if (clearExisting) {
+                    clearBookshelf();
+                }
+
+                // Add the spine images to the bookshelf
+                spineImages.forEach((spine, index) => {
+                    // Extract dimensions from the image
+                    const img = new Image();
+                    img.onload = function () {
+                        // Create a book spine element with the loaded image
+                        addLocalBookSpine({
+                            index: index,
+                            fileName: spine.fileName,
+                            dimensions: {
+                                width: Math.max(30, Math.floor(img.width * 0.2)), // Scale down for reasonable spine width
+                                height: Math.max(100, Math.floor(img.height * 0.2)) // Scale down for reasonable height
+                            },
+                            url: spine.url
+                        });
+
+                        // Revoke object URL after it's no longer needed
+                        if (index === spineImages.length - 1) {
+                            setTimeout(() => {
+                                spineImages.forEach(s => URL.revokeObjectURL(s.url));
+                            }, 1000);
+                        }
+                    };
+                    img.src = spine.url;
+                });
+            }
+
+            /**
+             * Add a local book spine to the bookshelf
+             */
+            function addLocalBookSpine(spineData) {
+                // Find appropriate shelf
+                const bookshelf = document.getElementById('main-bookshelf');
+                const shelves = bookshelf.querySelectorAll('.bookshelf-row');
+                let targetShelf;
+
+                if (shelves.length === 0) {
+                    // No shelves exist yet, create one
+                    targetShelf = document.createElement('div');
+                    targetShelf.className = 'bookshelf-row';
+                    targetShelf.id = 'shelf-1';
+                    bookshelf.appendChild(targetShelf);
+                } else {
+                    // Use the first shelf or create a new one if needed
+                    targetShelf = shelves[0];
+                }
+
+                // Create book element with unique ID
+                const book = document.createElement('div');
+                book.className = 'book original-size';
+                book.draggable = true;
+
+                // Create a unique ID for the book based on file name and timestamp
+                const bookId = `book-${Date.now()}-${spineData.fileName.replace(/[^a-z0-9]/gi, '-')}`;
+                book.dataset.bookId = bookId;
+                book.dataset.spineData = JSON.stringify(spineData);
+
+                // Calculate dimensions
+                const currentDimensions = getCurrentDimensions();
+                const scaledWidth = Math.round(spineData.dimensions.width *
+                    currentDimensions.scaleFactor * currentDimensions.widthFactor);
+                const scaledHeight = Math.round(spineData.dimensions.height *
+                    currentDimensions.scaleFactor * currentDimensions.heightFactor);
+
+                // Set book dimensions
+                book.style.width = `${scaledWidth}px`;
+                book.style.height = `${scaledHeight}px`;
+
+                // Create spine element
+                const spine = document.createElement('div');
+                spine.className = 'book-spine original-spine';
+                spine.style.width = `${scaledWidth}px`;
+                spine.style.height = `${scaledHeight}px`;
+
+                // Create and add spine image
+                const img = document.createElement('img');
+                img.src = spineData.url;
+                img.alt = `Book spine ${spineData.fileName}`;
+                img.className = 'spine-image';
+
+                // Add image to spine
+                spine.appendChild(img);
+
+                // Add spine to book
+                book.appendChild(spine);
+
+                // Add book to shelf
+                targetShelf.appendChild(book);
+
+                // Let DragDropManager handle the newly added book
+                DragDropManager.setupDraggableBook(book);
+
+                Logger.log(`Added book: ${bookId}`);
+            }
+
+            /**
+             * Clear all books from the bookshelf
+             */
+            function clearBookshelf() {
+                const bookshelf = document.getElementById('main-bookshelf');
+                if (bookshelf) {
+                    // Remove all child elements
+                    while (bookshelf.firstChild) {
+                        bookshelf.removeChild(bookshelf.firstChild);
+                    }
+
+                    // Create the initial shelf structure
+                    const topShelf = document.createElement('div');
+                    topShelf.className = 'bookshelf-row';
+                    topShelf.id = 'shelf-1';
+
+                    const middleShelf = document.createElement('div');
+                    middleShelf.className = 'bookshelf-row';
+                    middleShelf.id = 'shelf-2';
+
+                    const bottomShelf = document.createElement('div');
+                    bottomShelf.className = 'bookshelf-row';
+                    bottomShelf.id = 'shelf-3';
+
+                    bookshelf.appendChild(topShelf);
+                    bookshelf.appendChild(middleShelf);
+                    bookshelf.appendChild(bottomShelf);
+
+                    Logger.log('Cleared bookshelf');
+                }
+            }
+
+            /**
+             * Get the current dimensions settings
+             */
+            function getCurrentDimensions() {
+                const savedSettings = localStorage.getItem('bookshelfDimensions');
+                if (savedSettings) {
+                    return JSON.parse(savedSettings);
+                }
+                return {
+                    scaleFactor: 0.25,
+                    heightFactor: 1.0,
+                    widthFactor: 1.0
+                };
+            }
+
+            /**
+             * Save the bookshelf order to localStorage
+             */
+            function saveBookshelfOrder() {
+                const shelves = document.querySelectorAll('.bookshelf-row');
+                const order = {};
+
+                shelves.forEach((shelf, shelfIndex) => {
+                    const bookIds = [];
+                    const books = shelf.querySelectorAll('.book');
+
+                    books.forEach(book => {
+                        if (book.dataset.bookId) {
+                            bookIds.push(book.dataset.bookId);
+                        }
+                    });
+
+                    order[`shelf_${shelfIndex}`] = bookIds;
+                });
+
+                // Save to localStorage for persistence
+                localStorage.setItem('bookshelfOrder', JSON.stringify(order));
+                Logger.log('Saved bookshelf order');
+            }
+
+            /**
+             * Set up the dimension control sliders and buttons
+             */
+            function setupDimensionControls() {
+                // Get control elements
+                const scaleSlider = document.getElementById('scale-factor');
+                const heightSlider = document.getElementById('height-factor');
+                const widthSlider = document.getElementById('width-factor');
+                const scaleValue = document.getElementById('scale-value');
+                const heightValue = document.getElementById('height-value');
+                const widthValue = document.getElementById('width-value');
+                const resetBtn = document.getElementById('reset-dimensions');
+                const applyBtn = document.getElementById('apply-dimensions');
+                const collapseToggle = document.getElementById('collapse-toggle');
+                const controlPanel = document.getElementById('dimensions-controls');
+
+                // Set up the collapse toggle functionality
+                if (controlPanel && collapseToggle) {
+                    // Check if there's a saved state in localStorage
+                    const savedCollapsedState = localStorage.getItem('dimensionsPanelCollapsed');
+
+                    // Apply the saved state if it exists
+                    if (savedCollapsedState === 'true') {
+                        controlPanel.classList.add('collapsed');
+                        collapseToggle.textContent = '▲'; // Up arrow when collapsed
+                        collapseToggle.title = "Expand";
+                    }
+
+                    collapseToggle.addEventListener('click', function () {
+                        controlPanel.classList.toggle('collapsed');
+
+                        // Change the toggle button text/icon based on state
+                        if (controlPanel.classList.contains('collapsed')) {
+                            collapseToggle.textContent = '▲'; // Up arrow when collapsed
+                            collapseToggle.title = "Expand";
+                            localStorage.setItem('dimensionsPanelCollapsed', 'true');
+                        } else {
+                            collapseToggle.textContent = '▼'; // Down arrow when expanded
+                            collapseToggle.title = "Collapse";
+                            localStorage.setItem('dimensionsPanelCollapsed', 'false');
+                        }
+                    });
+                }
+
+                // Update value displays when sliders change
+                scaleSlider.addEventListener('input', function () {
+                    scaleValue.textContent = this.value + '%';
+                });
+
+                heightSlider.addEventListener('input', function () {
+                    heightValue.textContent = this.value + '%';
+                });
+
+                widthSlider.addEventListener('input', function () {
+                    widthValue.textContent = this.value + '%';
+                });
+
+                // Reset button event
+                resetBtn.addEventListener('click', function () {
+                    scaleSlider.value = 25;
+                    heightSlider.value = 100;
+                    widthSlider.value = 100;
+                    scaleValue.textContent = '25%';
+                    heightValue.textContent = '100%';
+                    widthValue.textContent = '100%';
+
+                    // Trigger the apply function with default values
+                    applyDimensionChanges(0.25, 1.0, 1.0);
+                });
+
+                // Apply button event
+                applyBtn.addEventListener('click', function () {
+                    const scale = parseInt(scaleSlider.value) / 100;
+                    const height = parseInt(heightSlider.value) / 100;
+                    const width = parseInt(widthSlider.value) / 100;
+                    applyDimensionChanges(scale, height, width);
+                });
+
+                // Save dimension settings to localStorage
+                function saveDimensionSettings(scale, height, width) {
+                    const settings = {
+                        scaleFactor: scale,
+                        heightFactor: height,
+                        widthFactor: width
+                    };
+                    localStorage.setItem('bookshelfDimensions', JSON.stringify(settings));
+                }
+
+                // Apply dimension changes to all books
+                function applyDimensionChanges(scaleFactor, heightFactor, widthFactor) {
+                    // Save settings
+                    saveDimensionSettings(scaleFactor, heightFactor, widthFactor);
+
+                    // Create and dispatch a custom event
+                    const event = new CustomEvent('dimensionsChanged', {
+                        detail: {
+                            scaleFactor: scaleFactor,
+                            heightFactor: heightFactor,
+                            widthFactor: widthFactor
+                        }
+                    });
+                    document.dispatchEvent(event);
+
+                    // Refresh all books
+                    refreshBookshelf();
+                }
+
+                // Load saved settings if they exist
+                function loadSavedSettings() {
+                    const savedSettings = localStorage.getItem('bookshelfDimensions');
+                    if (savedSettings) {
+                        const settings = JSON.parse(savedSettings);
+                        scaleSlider.value = Math.round(settings.scaleFactor * 100);
+                        heightSlider.value = Math.round(settings.heightFactor * 100);
+                        widthSlider.value = Math.round(settings.widthFactor * 100);
+                        scaleValue.textContent = Math.round(settings.scaleFactor * 100) + '%';
+                        heightValue.textContent = Math.round(settings.heightFactor * 100) + '%';
+                        widthValue.textContent = Math.round(settings.widthFactor * 100) + '%';
+                    }
+                }
+
+                // Load settings on page load
+                loadSavedSettings();
+            }
+
+            /**
+             * Refresh the bookshelf with current dimension settings
+             */
+            function refreshBookshelf() {
+                // Get all books currently in the bookshelf
+                const books = document.querySelectorAll('.book.original-size');
+                const currentDimensions = getCurrentDimensions();
+
+                // Re-apply dimensions to each book
+                books.forEach(book => {
+                    // Find the book's spine data in the book's dataset
+                    const spineData = JSON.parse(book.dataset.spineData || '{}');
+                    if (spineData.dimensions) {
+                        // Calculate new scaled dimensions
+                        const scaledWidth = Math.round(spineData.dimensions.width *
+                            currentDimensions.scaleFactor * currentDimensions.widthFactor);
+                        const scaledHeight = Math.round(spineData.dimensions.height *
+                            currentDimensions.scaleFactor * currentDimensions.heightFactor);
+
+                        // Apply new dimensions to book and its spine
+                        book.style.width = `${scaledWidth}px`;
+                        book.style.height = `${scaledHeight}px`;
+
+                        // Find and update the book spine element
+                        const spineElement = book.querySelector('.book-spine');
+                        if (spineElement) {
+                            spineElement.style.width = `${scaledWidth}px`;
+                            spineElement.style.height = `${scaledHeight}px`;
+                        }
+                    }
+                });
+
+                Logger.log('Refreshed bookshelf with new dimensions');
+            }
+
+            // Set up additional event listeners
+
+            // Listen for dimension change events
+            document.addEventListener('dimensionsChanged', function (event) {
+                // Update current dimensions
+                const dimensions = event.detail;
+                Logger.log(`Dimensions changed: scale=${dimensions.scaleFactor}, height=${dimensions.heightFactor}, width=${dimensions.widthFactor}`);
+            });
+
+            // Listen for clear button
+            const clearAllBtn = document.getElementById('clear-all-btn');
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function () {
+                    clearBookshelf();
+                    localStorage.removeItem('bookshelfOrder');
+                });
+            }
+
+            // Listen for export button
+            const exportBtn = document.getElementById('export-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function () {
+                    alert("Export functionality would be implemented here");
+                });
+            }
+
+            // Initialize by clearing the bookshelf
+            clearBookshelf();
+        });
+    </script>
+</body>
+
+</html>

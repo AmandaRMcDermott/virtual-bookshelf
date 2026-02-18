@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Bookshelf - Modern Drag and Drop</title>
+
+    <!-- External dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@dnd-kit/core@6.0.5/dist/dnd-kit-core.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@dnd-kit/sortable@7.0.1/dist/dnd-kit-sortable.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@dnd-kit/utilities@3.2.0/dist/dnd-kit-utilities.umd.min.js"></script>
+
+    <style>
+        /* Main application styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Sets the default font for all text */
+            line-height: 1.6; /* Sets spacing between lines of text */
+            color: #333; /* Sets default text color to dark gray */
+            margin: 0; /* Removes default margin around the page */
+            padding: 0; /* Removes default padding around the page */
+            background-color: #f5f5f5; /* Light gray background for the entire page */
+            -webkit-font-smoothing: antialiased; /* Makes fonts look smoother on WebKit browsers */
+        }
+
+        header {
+            background-color: #34495e; /* Dark blue header background */
+            color: white; /* White text in the header */
+            padding: 1rem; /* Adds space inside the header */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow below the header */
+        }
+
+        header h1 {
+            margin: 0; /* Removes default margin around the h1 */
+            font-size: 1.8rem; /* Sets the size of the header text */
+        }
+
+        .controls {
+            display: flex; /* Arranges child elements horizontally */
+            gap: 10px; /* Sets spacing between buttons */
+            margin-top: 10px; /* Adds space above the controls section */
+            flex-wrap: wrap; /* Allows buttons to wrap to next line on small screens */
+        }
+
+        /* Top buttons */
+        button {
+            padding: 8px 15px; /* Adds space inside buttons */
+            background-color: #3498db; /* Blue button background */
+            color: white; /* White text on buttons */
+            border: none; /* Removes default button border */
+            border-radius: 4px; /* Rounds button corners */
+            cursor: pointer; /* Shows hand cursor on hover */
+            transition: background-color 0.3s; /* Smooth color change animation */
+        }
+
+        button:hover {
+            /* background-color: #2980b9; /* Darker blue on hover (commented out) */
+            background-color: #57ce8cff; /* Green color on hover */
+        }
+
+        main {
+            max-width: 1200px; /* Limits width of main content area */
+            margin: 0 auto; /* Centers content horizontally */
+            padding: 20px; /* Adds space inside the main content area */
+        }
+
+        footer {
+            text-align: center; /* Centers footer text */
+            padding: 1rem; /* Adds space inside the footer */
+            margin-top: 2rem; /* Adds space above the footer */
+            background-color: #34495e; /* Dark blue footer background (matches header) */
+            color: white; /* White text in footer */
+        }
+
+        /* Bookshelf styles */
+        .bookshelf-container {
+            margin-top: 20px; /* Adds space above the bookshelf */
+        }
+
+        .bookshelf {
+            width: 100%; /* Makes bookshelf full width of container */
+            box-sizing: border-box; /* Includes padding and border in element width calculation */
+        }
+
+        .bookshelf-row {
+            width: 100%; /* Makes shelf full width of container */
+            white-space: nowrap; /* Prevents text wrapping */
+            overflow-x: auto; /* Adds horizontal scrollbar if books overflow */
+            /* min-height: 180px; /* Commented out minimum height */
+            display: flex; /* Uses flexbox layout for books */
+            flex-direction: row !important; /* Forces horizontal arrangement of books */
+            flex-wrap: nowrap !important; /* Prevents books from wrapping to next line */
+            padding: 10px 5px; /* Adds space inside the shelf (top/bottom, left/right) */
+            border-radius: 5px; /* Rounds shelf corners */
+            margin-bottom: 20px; /* Adds space below each shelf */
+            background-color: #e0c8ad; /* Light brown shelf background */
+            border: 5px solid #8b4513; /* Dark brown shelf border */
+            transition: background-color 0.3s ease; /* Smooth color change animation */
+            position: relative; /* Required for absolute positioning of children */
+            align-items: flex-end; /* Aligns items to the bottom of the shelf */
+            min-height: 150px; /* Minimum height of shelf */
+        }
+
+        .bookshelf-row::before {
+            content: ''; /* Required for pseudo-elements */
+            position: absolute; /* Positions element relative to parent */
+            bottom: 0; /* Aligns to bottom of shelf */
+            left: 0; /* Aligns to left edge */
+            right: 0; /* Extends to right edge */
+            height: 15px; /* Height of the shelf front edge */
+            background-color: #8b4513; /* Dark brown color for shelf front */
+            border-radius: 0 0 5px 5px; /* Rounds bottom corners only */
+            z-index: 0; /* Places behind books */
+        }
+
+        .bookshelf-row.drag-over {
+            background-color: #f5deb3; /* Lighter brown when dragging over (visual feedback) */
+        }
+
+        .book {
+            display: inline-flex; /* Displays as inline element with flex properties */
+            flex-shrink: 0; /* Prevents books from shrinking */
+            position: relative; /* Required for z-index to work */
+            touch-action: none; /* Prevents browser handling of drag-and-drop on touch */
+            cursor: grab; /* Hand cursor indicating draggable */
+            margin-right: 5px; /* Adds space between books */
+            margin-bottom: 0; /* Ensures no gap at bottom of books */
+            z-index: 1; /* Places books above shelf */
+        }
+
+        .book.dragging {
+            opacity: 0.7; /* Makes book semi-transparent while dragging */
+            cursor: grabbing; /* Changes cursor while actively dragging */
+            z-index: 1000; /* Places dragged book on top of everything */
+        }
+
+        .book:has(.handle) {
+            padding-inline-end: 100px; /* Adds padding to the end of books with handles */
+        }
+
+        .book:not(:has(.handle)) {
+            cursor: grab; /* Hand cursor for books without handles */
+        }
+
+        .book[aria-grabbed="true"] .book[data-shadow] {
+            transform: scale(1.03); /* Slightly enlarges grabbed book */
+            backdrop-filter: blur(5px); /* Blurs content behind the book */
+            -webkit-backdrop-filter: blur(10px); /* Safari support for blur */
+            background-color: rgba(134, 134, 134, 0.9); /* Semi-transparent gray background */
+            box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5),
+                -1px 0 15px 0 rgba(34, 33, 81, 0.01), 0px 15px 15px 0 rgba(34, 33, 81, 0.25); /* Complex shadow effect */
+        }
+
+        .handle {
+            display: flex; /* Uses flexbox for layout */
+            width: 120px; /* Width of handle element */
+            padding: 15px; /* Adds space inside the handle */
+            align-items: center; /* Centers content vertically */
+            justify-content: center; /* Centers content horizontally */
+            flex: 0 0 auto; /* Prevents handle from growing or shrinking */
+            touch-action: none; /* Prevents browser handling of touch events */
+            cursor: grab; /* Hand cursor indicating draggable */
+            border-radius: 5px; /* Rounds handle corners */
+            border: none; /* Removes border */
+            outline: none; /* Removes outline */
+            appearance: none; /* Removes default browser styling */
+            background-color: transparent; /* Makes handle background transparent */
+            -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+            user-select: none; /* Prevents text selection */
+            -webkit-user-select: none; /* Safari support for preventing text selection */
+        }
+
+        .handle:hover,
+        .handle:active {
+            background-color: rgba(201, 18, 18, 0.05); /* Very light red background on hover/active */
+        }
+
+        .handle:focus-visible {
+            outline: none; /* Removes default focus outline */
+            box-shadow: 0 0 0 20px rgba(105, 99, 171, 0), inset 0 0 0 2.5px #4c9ffe; /* Blue inner glow for focus */
+        }
+
+        .handle::before {
+            content: " "; /* Required for pseudo-elements */
+            display: block; /* Makes element a block */
+            width: 120px; /* Width of handle icon */
+            height: 120px; /* Height of handle icon */
+            flex-shrink: 0; /* Prevents icon from shrinking */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%23919eab'/%3E%3C/svg%3E"); /* SVG drag handle icon */
+            background-size: contain; /* Scales icon to fit */
+            background-repeat: no-repeat; /* Prevents icon from repeating */
+        }
+
+        .handle:hover::before,
+        .handle:active::before {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z' fill='%236f7b88'/%3E%3C/svg%3E"); /* Darker SVG icon on hover/active */
+        }
+
+        .book-spine {
+            display: flex; /* Uses flexbox for layout */
+            align-items: center; /* Centers content vertically */
+            justify-content: center; /* Centers content horizontally */
+            position: relative; /* Required for z-index and positioning */
+            height: 150px; /* Height of the book spine */
+            width: 30px; /* Width of the book spine */
+            /* background-color: #3498db; /* Blue background (commented out) */
+            color: white; /* White text color */
+            writing-mode: vertical-rl; /* Vertical text (right to left) */
+            text-orientation: mixed; /* Determines orientation of vertical text */
+            text-align: center; /* Centers text horizontally */
+            padding: 5px; /* Adds space inside the spine */
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3); /* Adds shadow for 3D effect */
+            margin-bottom: 0; /* Ensures spine sits flush with shelf bottom */
+            border-radius: 3px; /* Slightly rounds spine corners */
+        }
+
+        .spine-image {
+            width: 100%; /* Makes image fill the spine width */
+            height: 100%; /* Makes image fill the spine height */
+            object-fit: cover; /* Scales image to cover area without distortion */
+        }
+
+        /* Controls panel */
+        .controls-panel {
+            background-color: #fff; /* White background for the panel */
+            border: 1px solid #ddd; /* Light gray border */
+            border-radius: 5px; /* Rounded corners */
+            padding: 15px; /* Space inside the panel */
+            margin-bottom: 20px; /* Space below the panel */
+        }
+
+        .controls-panel h3 {
+            margin-top: 0; /* Removes space above the heading */
+        }
+
+        .control-group {
+            margin-bottom: 15px; /* Space below each control group */
+        }
+
+        .control-group label {
+            display: block; /* Makes label take full width */
+            margin-bottom: 5px; /* Space below the label */
+            font-weight: bold; /* Makes label text bold */
+        }
+
+        .upload-control input[type="file"] {
+            display: none; /* Hides the default file input */
+        }
+
+        .select-button {
+            background-color: #3498db; /* Blue button background */
+            color: white; /* White text */
+            border: none; /* No border */
+            padding: 10px 20px; /* Space inside the button */
+            border-radius: 4px; /* Rounded corners */
+            cursor: pointer; /* Hand cursor on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Virtual Bookshelf - Modern Drag & Drop</h1>
+        <div class="controls">
+            <button id="add-book-btn">Add Sample Book</button>
+            <button id="add-shelf-btn">Add New Shelf</button>
+            <button id="clear-all-btn">Clear All</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="bookshelf-container">
+            <h2>My Bookshelf</h2>
+            <p>A modern implementation with improved drag and drop functionality</p>
+
+            <div class="controls-panel">
+                <h3>Upload Book Spine Images</h3>
+                <div class="upload-control">
+                    <input type="file" id="spine-file-input" multiple accept="image/*">
+                    <button id="select-files-btn" class="select-button">Choose Files</button>
+                </div>
+                <div id="selected-files-list" style="margin-top: 10px;">
+                    <p>No files selected</p>
+                </div>
+            </div>
+
+            <div class="bookshelf" id="main-bookshelf">
+                <!-- Books will be dynamically added here -->
+                <div class="bookshelf-row" id="shelf-1"></div>
+                <div class="bookshelf-row" id="shelf-2"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Virtual Bookshelf - Modern Edition</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize the drag-and-drop functionality once the DOM is loaded
+            initializeDragAndDrop();
+
+            // Set up event listeners for buttons
+            document.getElementById('add-book-btn').addEventListener('click', addSampleBook);
+            document.getElementById('add-shelf-btn').addEventListener('click', addNewShelf);
+            document.getElementById('clear-all-btn').addEventListener('click', clearAllShelves);
+            document.getElementById('select-files-btn').addEventListener('click', function () {
+                document.getElementById('spine-file-input').click();
+            });
+            document.getElementById('spine-file-input').addEventListener('change', handleFileSelection);
+        });
+
+        // Book colors for sample books
+        const bookColors = [
+            '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c',
+            '#f39c12', '#d35400', '#c0392b', '#16a085', '#27ae60',
+            '#2980b9', '#8e44ad', '#f1c40f', '#e67e22', '#95a5a6'
+        ];
+
+        // Book titles for sample books
+        const bookTitles = [
+            'The Great Adventure', 'Mystery of the Deep', 'Starry Night',
+            'The Lost Treasure', 'Beyond the Horizon', 'Winter Dreams',
+            'Summer Days', 'Autumn Leaves', 'Spring Flowers', 'Mountain Peak',
+            'Ocean Waves', 'Desert Sands', 'Forest Whispers', 'City Lights',
+            'River Flow', 'The Hidden Path', 'Secret Garden', 'Ancient Scrolls'
+        ];
+
+        // Book counter for generating unique IDs
+        let bookCounter = 1;
+
+        /**
+         * Initialize the drag and drop functionality
+         *
+         * This function sets up the HTML5 native drag and drop functionality
+         * with inspiration from the dnd-kit library's approach but without the React dependency.
+         * It makes all book elements draggable and all shelf elements accept drops.
+         */
+        function initializeDragAndDrop() {
+            // Make all existing books draggable by attaching the necessary event handlers
+            document.querySelectorAll('.book').forEach(setupDraggableBook);
+
+            // Make all shelves accept dropped books by attaching drop event handlers
+            document.querySelectorAll('.bookshelf-row').forEach(setupDroppableShelf);
+
+            console.log('Drag and drop initialized');
+        }
+
+        /**
+         * Set up a book element to be draggable
+         *
+         * This function configures a book element with the necessary event listeners
+         * and attributes to make it draggable using the HTML5 Drag and Drop API.
+         *
+         * @param {HTMLElement} book - The book element to make draggable
+         */
+        function setupDraggableBook(book) {
+            // Skip setup if the book is already initialized (prevents duplicate event listeners)
+            if (book.hasAttribute('data-draggable-initialized')) return;
+
+            // Enable the HTML5 draggable attribute
+            book.draggable = true;
+
+            // Disable dragging on any images within the book (prevents image drag taking precedence)
+            book.querySelectorAll('img').forEach(img => img.draggable = false);
+
+            // Set up the dragstart event - triggered when drag begins
+            book.addEventListener('dragstart', function (e) {
+                // Configure allowed drag effects (move = change position)
+                e.dataTransfer.effectAllowed = 'move';
+
+                // Store the book's ID in the drag data for retrieval on drop
+                e.dataTransfer.setData('text/plain', book.id);
+
+                // Add visual feedback class while dragging
+                book.classList.add('dragging');
+
+                // Store the original shelf ID so we can tell if the book changed shelves
+                book.dataset.sourceShelf = book.parentElement.id;
+
+                // Optional: Set a custom drag image (commented out)
+                // e.dataTransfer.setDragImage(book, 0, 0);
+            });
+
+            // Set up the dragend event - triggered when drag ends (whether successful or not)
+            book.addEventListener('dragend', function () {
+                // Remove the visual feedback class
+                book.classList.remove('dragging');
+            });
+
+            // Mark this book as initialized to prevent duplicate setup
+            book.setAttribute('data-draggable-initialized', 'true');
+        }
+
+        /**
+         * Set up a shelf element to accept dropped books
+         *
+         * This function configures a shelf element with the necessary event listeners
+         * to accept books being dropped on it. It handles visual feedback during drag,
+         * proper positioning of books on drop, and animations.
+         *
+         * @param {HTMLElement} shelf - The shelf element to make droppable
+         */
+        function setupDroppableShelf(shelf) {
+            // The dragover event - triggered when something is being dragged over the shelf
+            // This event must be handled to allow drops
+            shelf.addEventListener('dragover', function (e) {
+                // Prevent the default behavior (which would block drops)
+                e.preventDefault();
+
+                // Set the drop effect to 'move' (changes cursor)
+                e.dataTransfer.dropEffect = 'move';
+
+                // Add visual feedback to highlight the shelf being dragged over
+                shelf.classList.add('drag-over');
+
+                // Update the blue indicator line showing where the book will be placed
+                updateDropIndicator(e.clientX, shelf);
+            });
+
+            // The dragleave event - triggered when the drag leaves the shelf
+            shelf.addEventListener('dragleave', function (e) {
+                // Only remove feedback if we've actually left the shelf
+                // (not just moved between child elements)
+                if (!shelf.contains(e.relatedTarget)) {
+                    shelf.classList.remove('drag-over');
+                    removeDropIndicator();
+                }
+            });
+
+            // The drop event - triggered when something is dropped on the shelf
+            shelf.addEventListener('drop', function (e) {
+                // Prevent the default drop behavior
+                e.preventDefault();
+
+                // Remove visual feedback
+                shelf.classList.remove('drag-over');
+                removeDropIndicator();
+
+                // Get the ID of the dragged book from the dataTransfer object
+                const bookId = e.dataTransfer.getData('text/plain');
+                const draggedBook = document.getElementById(bookId);
+
+                if (draggedBook) {
+                    // Remove the book from its current location
+                    draggedBook.parentElement.removeChild(draggedBook);
+
+                    // Determine where in the shelf to insert the book
+                    const insertionPoint = getInsertionPoint(e.clientX, shelf);
+
+                    // Insert the book either before another book or at the end
+                    if (insertionPoint) {
+                        shelf.insertBefore(draggedBook, insertionPoint); // Insert before another book
+                    } else {
+                        shelf.appendChild(draggedBook); // Add to the end of the shelf
+                    }
+
+                    // Apply a bounce animation to the placed book
+                    animateBookPlacement(draggedBook);
+
+                    // Save the current order of books to localStorage for persistence
+                    saveBookshelfOrder();
+                }
+            });
+        }
+
+        // Drop indicator element
+        let dropIndicator = null;
+
+        /**
+         * Update the drop indicator based on mouse position
+         *
+         * This function creates and positions a visual indicator (blue line)
+         * that shows where a dragged book will be placed when dropped.
+         * The indicator position is calculated based on the mouse position (clientX)
+         * and the current shelf being dragged over.
+         *
+         * @param {number} clientX - The horizontal mouse position in client coordinates
+         * @param {HTMLElement} shelf - The shelf element being dragged over
+         */
+        function updateDropIndicator(clientX, shelf) {
+            // Create the drop indicator if it doesn't exist yet
+            if (!dropIndicator) {
+                dropIndicator = document.createElement('div');
+                dropIndicator.style.position = 'absolute'; // Position absolutely on the page
+                dropIndicator.style.width = '4px'; // Thin vertical line
+                dropIndicator.style.backgroundColor = '#3498db'; // Blue color
+                dropIndicator.style.zIndex = '1000'; // Appear above other elements
+                document.body.appendChild(dropIndicator);
+            }
+
+            // Calculate where to insert the book based on mouse position
+            const insertionPoint = getInsertionPoint(clientX, shelf);
+
+            if (insertionPoint) {
+                // Case 1: Position before an existing book
+                const rect = insertionPoint.getBoundingClientRect();
+                dropIndicator.style.display = 'block';
+                dropIndicator.style.height = `${rect.height}px`; // Match book height
+                dropIndicator.style.top = `${rect.top}px`; // Align with top of book
+                dropIndicator.style.left = `${rect.left - 2}px`; // Position slightly left of the book
+            } else if (shelf.children.length > 0) {
+                // Case 2: Position at the end of books in the shelf
+                const lastBook = shelf.children[shelf.children.length - 1];
+                const rect = lastBook.getBoundingClientRect();
+                dropIndicator.style.display = 'block';
+                dropIndicator.style.height = `${rect.height}px`;
+                dropIndicator.style.top = `${rect.top}px`;
+                dropIndicator.style.left = `${rect.right + 2}px`; // Position slightly right of last book
+            } else {
+                // Case 3: Empty shelf - position near the start
+                const rect = shelf.getBoundingClientRect();
+                dropIndicator.style.display = 'block';
+                dropIndicator.style.height = `${rect.height - 20}px`; // Slightly shorter than shelf
+                dropIndicator.style.top = `${rect.top + 10}px`; // Position with gap at top
+                dropIndicator.style.left = `${rect.left + 10}px`; // Position with gap at left
+            }
+        }
+
+        /**
+         * Remove the drop indicator
+         */
+        function removeDropIndicator() {
+            if (dropIndicator) {
+                dropIndicator.style.display = 'none';
+            }
+        }
+
+        /**
+         * Calculate where to insert a book based on mouse position
+         *
+         * This function determines the insertion point for a dragged book
+         * by finding the first book in the shelf whose middle point is to the right
+         * of the current mouse position. This creates a natural left-to-right
+         * insertion behavior where books are inserted before the book the cursor is over.
+         *
+         * @param {number} clientX - The horizontal mouse position in client coordinates
+         * @param {HTMLElement} shelf - The shelf element being dragged over
+         * @returns {HTMLElement|null} - The book element to insert before, or null to append at the end
+         */
+        function getInsertionPoint(clientX, shelf) {
+            // Get all books in this shelf that aren't currently being dragged
+            const books = Array.from(shelf.querySelectorAll('.book:not(.dragging)'));
+
+            // If there are no books in the shelf, return null (append to empty shelf)
+            if (books.length === 0) return null;
+
+            // Find the first book whose middle point is to the right of the cursor
+            return books.find(book => {
+                const rect = book.getBoundingClientRect();
+                const bookMiddle = rect.left + rect.width / 2; // Calculate middle point of the book
+                return clientX < bookMiddle; // Return true when cursor is to the left of book middle
+            });
+        }
+
+        /**
+         * Apply a subtle animation when a book is placed
+         *
+         * This function creates a "bounce" effect when a book is placed on a shelf:
+         * 1. First, it moves the book up slightly (-8px on Y axis)
+         * 2. Then it drops the book back to its original position (0px)
+         * 3. Finally, it removes the transition to prevent affecting future operations
+         */
+        function animateBookPlacement(book) {
+            // Add a CSS transition for smooth animation
+            book.style.transition = 'transform 0.3s ease-out';
+
+            // Move the book up slightly from its bottom-aligned position
+            book.style.transform = 'translateY(-8px)';
+
+            // After a tiny delay (10ms), drop the book back to its original position
+            setTimeout(() => {
+                book.style.transform = '';
+
+                // After animation completes, remove the transition to prevent it affecting other operations
+                setTimeout(() => {
+                    book.style.transition = '';
+                }, 300); // 300ms matches the transition duration
+            }, 10);
+        }
+
+        /**
+         * Add a new sample book to the first shelf
+         */
+        function addSampleBook() {
+            const shelf = document.querySelector('.bookshelf-row');
+            if (!shelf) return;
+
+            // Create a unique ID for the book
+            const bookId = `book-${bookCounter++}`;
+
+            // Get random color and title
+            const color = bookColors[Math.floor(Math.random() * bookColors.length)];
+            const title = bookTitles[Math.floor(Math.random() * bookTitles.length)];
+
+            // Create book element
+            const book = document.createElement('div');
+            book.className = 'book';
+            book.id = bookId;
+
+            // Create book spine
+            const spine = document.createElement('div');
+            spine.className = 'book-spine';
+            spine.style.backgroundColor = color;
+            spine.textContent = title;
+
+            // Add spine to book
+            book.appendChild(spine);
+
+            // Add book to shelf
+            shelf.appendChild(book);
+
+            // Set up draggable behavior
+            setupDraggableBook(book);
+
+            // Animate the new book
+            animateBookPlacement(book);
+        }
+
+        /**
+         * Add a new bookshelf row
+         */
+        function addNewShelf() {
+            const bookshelf = document.getElementById('main-bookshelf');
+            const shelfCount = bookshelf.querySelectorAll('.bookshelf-row').length;
+
+            // Create new shelf
+            const newShelf = document.createElement('div');
+            newShelf.className = 'bookshelf-row';
+            newShelf.id = `shelf-${shelfCount + 1}`;
+
+            // Add to bookshelf
+            bookshelf.appendChild(newShelf);
+
+            // Set up droppable behavior
+            setupDroppableShelf(newShelf);
+        }
+
+        /**
+         * Clear all shelves
+         */
+        function clearAllShelves() {
+            document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                while (shelf.firstChild) {
+                    shelf.removeChild(shelf.firstChild);
+                }
+            });
+        }
+
+        /**
+         * Handle file selection for book spine images
+         */
+        function handleFileSelection() {
+            const fileInput = document.getElementById('spine-file-input');
+            const selectedFilesList = document.getElementById('selected-files-list');
+            const files = fileInput.files;
+
+            if (files.length > 0) {
+                // Clear previous file list
+                selectedFilesList.innerHTML = '';
+
+                // Display selected files
+                Array.from(files).forEach(file => {
+                    // Create file item
+                    const fileItem = document.createElement('div');
+                    fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    selectedFilesList.appendChild(fileItem);
+
+                    // Process the file
+                    processSpineImage(file);
+                });
+            } else {
+                selectedFilesList.innerHTML = '<p>No files selected</p>';
+            }
+        }
+
+        /**
+         * Process a spine image file
+         */
+        function processSpineImage(file) {
+            // Create a temporary URL for the image
+            const imageUrl = URL.createObjectURL(file);
+
+            // Load the image to get dimensions
+            const img = new Image();
+            img.onload = function () {
+                // Create a book with this spine image
+                createBookWithSpineImage({
+                    fileName: file.name,
+                    url: imageUrl,
+                    width: Math.max(30, Math.floor(img.width * 0.2)),
+                    height: Math.max(120, Math.floor(img.height * 0.2))
+                });
+
+                // Revoke the object URL to free memory
+                URL.revokeObjectURL(imageUrl);
+            };
+            img.src = imageUrl;
+        }
+
+        /**
+         * Create a book with a spine image
+         */
+        function createBookWithSpineImage(spineData) {
+            const shelf = document.querySelector('.bookshelf-row');
+            if (!shelf) return;
+
+            // Create a unique ID for the book
+            const bookId = `book-${bookCounter++}-${spineData.fileName.replace(/[^a-z0-9]/gi, '-')}`;
+
+            // Create book element
+            const book = document.createElement('div');
+            book.className = 'book';
+            book.id = bookId;
+
+            // Create book spine
+            const spine = document.createElement('div');
+            spine.className = 'book-spine';
+            spine.style.width = `${spineData.width}px`;
+            spine.style.height = `${spineData.height}px`;
+
+            // Create spine image
+            const spineImg = document.createElement('img');
+            spineImg.src = spineData.url;
+            spineImg.alt = `Book spine for ${spineData.fileName}`;
+            spineImg.className = 'spine-image';
+
+            // Add image to spine
+            spine.appendChild(spineImg);
+
+            // Add spine to book
+            book.appendChild(spine);
+
+            // Add book to shelf
+            shelf.appendChild(book);
+
+            // Set up draggable behavior
+            setupDraggableBook(book);
+
+            // Animate the new book
+            animateBookPlacement(book);
+        }
+
+        /**
+         * Save the bookshelf order to localStorage
+         */
+        function saveBookshelfOrder() {
+            const shelves = document.querySelectorAll('.bookshelf-row');
+            const order = {};
+
+            shelves.forEach((shelf, shelfIndex) => {
+                const bookIds = [];
+                shelf.querySelectorAll('.book').forEach(book => {
+                    bookIds.push(book.id);
+                });
+                order[`shelf_${shelfIndex}`] = bookIds;
+            });
+
+            // Save to localStorage
+            localStorage.setItem('bookshelfOrder', JSON.stringify(order));
+        }
+    </script>
+</body>
+
+</html>

@@ -2,7 +2,21 @@
 <html lang="en">
 
 <head>
-    <!-- Force layout repaint with viewport meta tag -->
+    <!--
+    Virtual Bookshelf Application
+
+    This application creates a digital bookshelf where users can:
+    - Display book spines in a visually appealing way
+    - Upload their own book spine images
+    - Arrange books by dragging and dropping them between shelves
+    - Adjust the global dimensions of all books
+
+    The app uses a modular architecture with specialized components:
+    - BookPositioner: Calculates insertion positions for books during drag operations
+    - VisualManager: Handles visual feedback and animations during drag operations
+    - DragDropManager: Centralizes drag and drop event handling and book positioning
+    -->
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Bookshelf</title>
@@ -81,12 +95,11 @@
             <button id="clear-all-btn" title="Clear all loaded spines">Clear All</button>
             <button id="upload-local-btn" title="Upload spine images from your device">Upload Images</button>
             <button id="export-btn" title="Export bookshelf as image">Export Image</button>
-            <button id="toggle-resize-btn" title="Toggle individual book resizing" class="toggle-button active">Individual Resize: ON</button>
         </div>
     </header>
 
     <main>
-        <!-- Book Info Panel Template (Hidden by default) -->
+        Book Info Panel Template (Hidden by default)
         <div id="book-info-panel" class="book-info-panel">
             <div class="book-info-header">
                 <h4>Book Spine <span id="book-info-id">0</span></h4>
@@ -107,15 +120,6 @@
             <div class="control-group">
                 <label for="book-width">Width: <span id="book-width-value">100%</span></label>
                 <input type="range" id="book-width" min="50" max="200" value="100" step="5">
-            </div>
-            <div class="book-info-modes">
-                <button id="resize-mode-scale" class="mode-button active">Scale</button>
-                <button id="resize-mode-width" class="mode-button">Width</button>
-                <button id="resize-mode-height" class="mode-button">Height</button>
-            </div>
-
-            <div class="resize-tip">
-                Tip: You can also directly resize this book using the blue handles that appear when hovering over it.
             </div>
 
             <div class="book-info-controls">
@@ -154,10 +158,10 @@
         <div class="bookshelf-container">
             <h2>My Bookshelf</h2>
             <p>Displaying spine images with their original dimensions (scaled down for viewing)</p>
-            <p class="tip"><strong>Tip:</strong> You can filter which spine images to display by adding
-                <code>?spines=1,5,10,20</code>
-                to the URL, where the numbers are the spine numbers you want to display.
-            </p>
+            <!-- <p class="tip"><strong>Tip:</strong> You can filter which spine images to display by adding -->
+            <!-- <code>?spines=1,5,10,20</code> -->
+            <!-- to the URL, where the numbers are the spine numbers you want to display. -->
+            <!-- </p> -->
 
             <!-- Book Dimensions Control Panel -->
             <div class="controls-panel" id="dimensions-controls">
@@ -338,7 +342,18 @@
     <script src="js/display_original_spines.js"></script>
     <script src="js/integrate_spine_images.js"></script>
     <script>
-        // Check if the page has been loaded properly and set up controls
+        /**
+         * Main Application Script
+         *
+         * This script initializes the Virtual Bookshelf application and sets up:
+         * - Book drag and drop functionality
+         * - File upload and processing
+         * - Book dimension controls
+         * - Visual feedback for user interactions
+         *
+         * The code uses a modular approach with specialized components handling
+         * different aspects of the application's functionality.
+         */
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Virtual bookshelf app loaded successfully');
 
@@ -358,90 +373,27 @@
                 bookshelf.classList.add('bookshelf-original');
             }
 
-            // Set up toggle resize button
-            const toggleResizeBtn = document.getElementById('toggle-resize-btn');
-            if (toggleResizeBtn) {
-                // Update button state based on current setting
-                updateToggleResizeButton();
+            // Main configuration and state
+            const config = {
+                animation: {
+                    style: 'smooth',
+                    smoothDuration: '0.3s',
+                    smoothTiming: 'ease-out',
+                    smoothOffset: '-5px'
+                },
+                positionThreshold: 0.5, // 50% threshold for insertion
+                throttleDelay: 30 // Milliseconds for dragover throttling
+            };
 
-                // Apply initial state to resize handles
-                updateResizeHandlesVisibility();
+            // Individual resize functionality has been removed
 
-                // Add global event listener to prevent resize handle interactions when disabled
-                document.addEventListener('mousedown', function(e) {
-                    if (e.target.classList.contains('resize-handle') && !dragDropConfig.individualResizeEnabled) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Show a brief message that resizing is disabled
-                        const msg = document.createElement('div');
-                        msg.textContent = "Individual book resizing is disabled";
-                        msg.style.position = 'absolute';
-                        msg.style.top = (e.clientY + 20) + 'px';
-                        msg.style.left = (e.clientX + 10) + 'px';
-                        msg.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                        msg.style.color = 'white';
-                        msg.style.padding = '8px 12px';
-                        msg.style.borderRadius = '4px';
-                        msg.style.fontSize = '14px';
-                        msg.style.zIndex = 1000;
-                        document.body.appendChild(msg);
-                        setTimeout(() => document.body.removeChild(msg), 2000);
-                    }
-                });
-
-                // Add click event listener
-                toggleResizeBtn.addEventListener('click', function() {
-                    // Toggle the state
-                    dragDropConfig.individualResizeEnabled = !dragDropConfig.individualResizeEnabled;
-
-                    // Update button appearance
-                    updateToggleResizeButton();
-
-                    // Update resize handles visibility
-                    updateResizeHandlesVisibility();
-
-                    // Save state to localStorage
-                    localStorage.setItem('individualResizeEnabled', dragDropConfig.individualResizeEnabled);
-                });
-            }
-
-            // Function to update toggle resize button appearance
-            function updateToggleResizeButton() {
-                if (!toggleResizeBtn) return;
-
-                toggleResizeBtn.textContent = dragDropConfig.individualResizeEnabled ?
-                    'Individual Resize: ON' : 'Individual Resize: OFF';
-
-                if (dragDropConfig.individualResizeEnabled) {
-                    toggleResizeBtn.classList.add('active');
-                    toggleResizeBtn.classList.remove('inactive');
-                } else {
-                    toggleResizeBtn.classList.remove('active');
-                    toggleResizeBtn.classList.add('inactive');
-                }
-            }
-
-            // Function to update resize handles visibility based on toggle state
-            function updateResizeHandlesVisibility() {
-                const resizeHandles = document.querySelectorAll('.resize-handle');
-                resizeHandles.forEach(handle => {
-                    handle.style.display = dragDropConfig.individualResizeEnabled ? '' : 'none';
-                });
-
-                // Update the resize tip message
-                const resizeTips = document.querySelectorAll('.resize-tip');
-                resizeTips.forEach(tip => {
-                    tip.textContent = dragDropConfig.individualResizeEnabled ?
-                        'Tip: You can directly resize this book using the blue handles that appear when hovering over it.' :
-                        'Individual book resizing is currently disabled. Enable it from the control panel.';
-                });
-            }
+            // Functions for individual resize functionality have been removed
 
             // Set up file upload functionality
             setupFileUpload();
 
             // Set up dimension controls
-            setupDimensionControls();
+            // setupDimensionControls();
 
             // Set up shelf drag handlers
             setupShelfDragHandlers();
@@ -525,7 +477,15 @@
 
             /**
              * Process local spine images
-             * @param {FileList} files - The selected image files
+             *
+             * This function takes images uploaded by the user and:
+             * - Creates temporary object URLs for each image
+             * - Loads each image to determine its dimensions
+             * - Creates book spine elements with appropriate sizing
+             * - Adds the spine images to the bookshelf with proper event handlers
+             * - Cleans up object URLs after processing to prevent memory leaks
+             *
+             * @param {FileList} files - The selected image files from the file input
              */
             function processLocalSpineImages(files) {
                 // Create temporary URLs for the selected files
@@ -625,79 +585,42 @@
                 book.appendChild(spine);
 
                 // Add resize handles
-                addResizeHandles(book);
+                // addResizeHandles(book);
 
                 // Add book to shelf
                 targetShelf.appendChild(book);
 
                 // Add event listeners for interaction
-                addBookEventListeners(book);
+                // addBookEventListeners(book);
             }
 
             /**
              * Add resize handles to a book
+             * Function kept as a stub for backward compatibility
              */
-            function addResizeHandles(book) {
-                const rightHandle = document.createElement('div');
-                rightHandle.className = 'resize-handle right';
-                rightHandle.dataset.resizeType = 'width';
-
-                const bottomHandle = document.createElement('div');
-                bottomHandle.className = 'resize-handle bottom';
-                bottomHandle.dataset.resizeType = 'height';
-
-                const cornerHandle = document.createElement('div');
-                cornerHandle.className = 'resize-handle corner';
-                cornerHandle.dataset.resizeType = 'scale';
-
-                // Set initial visibility based on toggle state
-                if (!dragDropConfig.individualResizeEnabled) {
-                    rightHandle.style.display = 'none';
-                    bottomHandle.style.display = 'none';
-                    cornerHandle.style.display = 'none';
-                }
-
-                book.appendChild(rightHandle);
-                book.appendChild(bottomHandle);
-                book.appendChild(cornerHandle);
-            }
+            // function addResizeHandles(book) {
+            //     // Individual book resizing functionality has been removed
+            // }
 
             /**
              * Add event listeners to a book
              */
-            function addBookEventListeners(book) {
-                // Click event for selecting a book
-                book.addEventListener('click', function (e) {
-                    if (e.target.classList.contains('resize-handle')) return;
+            // function addBookEventListeners(book) {
+            //     // Click event for selecting a book
+            //     book.addEventListener('click', function (e) {
+            //         // Select this book
+            //         const books = document.querySelectorAll('.book');
+            //         books.forEach(b => b.classList.remove('selected'));
+            //         this.classList.add('selected');
 
-                    // Select this book
-                    const books = document.querySelectorAll('.book');
-                    books.forEach(b => b.classList.remove('selected'));
-                    this.classList.add('selected');
+            //         // Show book info panel if needed
+            //         // (The main display_original_spines.js should handle this)
+            //     });
 
-                    // Show book info panel if needed
-                    // (The main display_original_spines.js should handle this)
-                });
-
-                // Enhanced drag and drop functionality
-                book.addEventListener('dragstart', function (e) {
-                    e.stopPropagation(); // Only prevent event bubbling
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', JSON.stringify({
-                        id: this.id || Date.now(),
-                        sourceShelf: this.parentNode.id
-                    }));
-                    this.classList.add('dragging');
-
-                    // Store source shelf
-                    this.dataset.sourceShelf = this.parentNode.id;
-                });
-
-                book.addEventListener('dragend', function () {
-                    this.classList.remove('dragging');
-                    VisualManager.hideIndicator(); // Hide indicator when drag ends
-                });
-            }
+            //     // Let the DragDropManager handle the drag and drop functionality
+            //     // This ensures the book will be properly set up for dragging
+            //     DragDropManager.setupDraggableBook(book);
+            // }
 
             /**
              * Get the current dimensions settings
@@ -717,94 +640,94 @@
             /**
              * Set up the dimension control sliders and buttons
              */
-            function setupDimensionControls() {
-                // Get control elements
-                const scaleSlider = document.getElementById('scale-factor');
-                const heightSlider = document.getElementById('height-factor');
-                const widthSlider = document.getElementById('width-factor');
-                const scaleValue = document.getElementById('scale-value');
-                const heightValue = document.getElementById('height-value');
-                const widthValue = document.getElementById('width-value');
-                const resetBtn = document.getElementById('reset-dimensions');
-                const applyBtn = document.getElementById('apply-dimensions');
+            // function setupDimensionControls() {
+            //     // Get control elements
+            //     const scaleSlider = document.getElementById('scale-factor');
+            //     const heightSlider = document.getElementById('height-factor');
+            //     const widthSlider = document.getElementById('width-factor');
+            //     const scaleValue = document.getElementById('scale-value');
+            //     const heightValue = document.getElementById('height-value');
+            //     const widthValue = document.getElementById('width-value');
+            //     const resetBtn = document.getElementById('reset-dimensions');
+            //     const applyBtn = document.getElementById('apply-dimensions');
 
-                // Update value displays when sliders change
-                scaleSlider.addEventListener('input', function () {
-                    scaleValue.textContent = this.value + '%';
-                });
+            //     // Update value displays when sliders change
+            //     scaleSlider.addEventListener('input', function () {
+            //         scaleValue.textContent = this.value + '%';
+            //     });
 
-                heightSlider.addEventListener('input', function () {
-                    heightValue.textContent = this.value + '%';
-                });
+            //     heightSlider.addEventListener('input', function () {
+            //         heightValue.textContent = this.value + '%';
+            //     });
 
-                widthSlider.addEventListener('input', function () {
-                    widthValue.textContent = this.value + '%';
-                });
+            //     widthSlider.addEventListener('input', function () {
+            //         widthValue.textContent = this.value + '%';
+            //     });
 
-                // Reset button event
-                resetBtn.addEventListener('click', function () {
-                    scaleSlider.value = 25;
-                    heightSlider.value = 100;
-                    widthSlider.value = 100;
-                    scaleValue.textContent = '25%';
-                    heightValue.textContent = '100%';
-                    widthValue.textContent = '100%';
+            //     // Reset button event
+            //     resetBtn.addEventListener('click', function () {
+            //         scaleSlider.value = 25;
+            //         heightSlider.value = 100;
+            //         widthSlider.value = 100;
+            //         scaleValue.textContent = '25%';
+            //         heightValue.textContent = '100%';
+            //         widthValue.textContent = '100%';
 
-                    // Trigger the apply function with default values
-                    applyDimensionChanges(0.25, 1.0, 1.0);
-                });
+            //         // Trigger the apply function with default values
+            //         applyDimensionChanges(0.25, 1.0, 1.0);
+            //     });
 
-                // Apply button event
-                applyBtn.addEventListener('click', function () {
-                    const scale = parseInt(scaleSlider.value) / 100;
-                    const height = parseInt(heightSlider.value) / 100;
-                    const width = parseInt(widthSlider.value) / 100;
-                    applyDimensionChanges(scale, height, width);
-                });
+            //     // Apply button event
+            //     applyBtn.addEventListener('click', function () {
+            //         const scale = parseInt(scaleSlider.value) / 100;
+            //         const height = parseInt(heightSlider.value) / 100;
+            //         const width = parseInt(widthSlider.value) / 100;
+            //         applyDimensionChanges(scale, height, width);
+            //     });
 
-                // Save dimension settings to localStorage
-                function saveDimensionSettings(scale, height, width) {
-                    const settings = {
-                        scale: scale,
-                        height: height,
-                        width: width
-                    };
-                    localStorage.setItem('bookshelfDimensions', JSON.stringify(settings));
-                }
+            //     // Save dimension settings to localStorage
+            //     function saveDimensionSettings(scale, height, width) {
+            //         const settings = {
+            //             scale: scale,
+            //             height: height,
+            //             width: width
+            //         };
+            //         localStorage.setItem('bookshelfDimensions', JSON.stringify(settings));
+            //     }
 
-                // Apply dimension changes to all books
-                function applyDimensionChanges(scaleFactor, heightFactor, widthFactor) {
-                    // Save settings
-                    saveDimensionSettings(scaleFactor, heightFactor, widthFactor);
+            //     // Apply dimension changes to all books
+            //     function applyDimensionChanges(scaleFactor, heightFactor, widthFactor) {
+            //         // Save settings
+            //         saveDimensionSettings(scaleFactor, heightFactor, widthFactor);
 
-                    // Custom event that will be handled in the main script
-                    const event = new CustomEvent('dimensionsChanged', {
-                        detail: {
-                            scaleFactor: scaleFactor,
-                            heightFactor: heightFactor,
-                            widthFactor: widthFactor
-                        }
-                    });
-                    document.dispatchEvent(event);
-                }
+            //         // Custom event that will be handled in the main script
+            //         const event = new CustomEvent('dimensionsChanged', {
+            //             detail: {
+            //                 scaleFactor: scaleFactor,
+            //                 heightFactor: heightFactor,
+            //                 widthFactor: widthFactor
+            //             }
+            //         });
+            //         document.dispatchEvent(event);
+            //     }
 
-                // Load saved settings if they exist
-                function loadSavedSettings() {
-                    const savedSettings = localStorage.getItem('bookshelfDimensions');
-                    if (savedSettings) {
-                        const settings = JSON.parse(savedSettings);
-                        scaleSlider.value = Math.round(settings.scale * 100);
-                        heightSlider.value = Math.round(settings.height * 100);
-                        widthSlider.value = Math.round(settings.width * 100);
-                        scaleValue.textContent = Math.round(settings.scale * 100) + '%';
-                        heightValue.textContent = Math.round(settings.height * 100) + '%';
-                        widthValue.textContent = Math.round(settings.width * 100) + '%';
-                    }
-                }
+            //     // Load saved settings if they exist
+            //     function loadSavedSettings() {
+            //         const savedSettings = localStorage.getItem('bookshelfDimensions');
+            //         if (savedSettings) {
+            //             const settings = JSON.parse(savedSettings);
+            //             scaleSlider.value = Math.round(settings.scale * 100);
+            //             heightSlider.value = Math.round(settings.height * 100);
+            //             widthSlider.value = Math.round(settings.width * 100);
+            //             scaleValue.textContent = Math.round(settings.scale * 100) + '%';
+            //             heightValue.textContent = Math.round(settings.height * 100) + '%';
+            //             widthValue.textContent = Math.round(settings.width * 100) + '%';
+            //         }
+            //     }
 
-                // Load settings on page load
-                loadSavedSettings();
-            }
+            //     // Load settings on page load
+            //     loadSavedSettings();
+            // }
 
             /**
              * Clear all books from the bookshelf
@@ -842,86 +765,82 @@
             /**
              * Configuration for drag and drop functionality
              */
-            const dragDropConfig = {
-                animation: {
-                    style: 'smooth',
-                    smoothDuration: '0.3s',
-                    smoothTiming: 'ease-out',
-                    smoothOffset: '-5px'
-                },
-                positionThreshold: 0.5, // 50% threshold for insertion
-                throttleDelay: 30, // Milliseconds for dragover throttling
-                individualResizeEnabled: true // Default is enabled
-            };
-
-            // Try to load saved resize toggle state
-            try {
-                const savedResizeState = localStorage.getItem('individualResizeEnabled');
-                if (savedResizeState !== null) {
-                    dragDropConfig.individualResizeEnabled = savedResizeState === 'true';
-                }
-            } catch (e) {
-                console.error('Error loading resize toggle state:', e);
-            }
-
-            // Create drop indicator element
-            const dropIndicator = document.createElement('div');
-            dropIndicator.classList.add('drop-indicator');
-            Object.assign(dropIndicator.style, {
-                position: 'absolute',
-                width: '4px',
-                backgroundColor: '#3498db',
-                display: 'none',
-                boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
-                zIndex: 1000
-            });
-            document.body.appendChild(dropIndicator);
-
-            // This function is already defined above, removing duplicate
-
-            // For dragover throttling
-            let lastDropIndicatorUpdateTime = 0;
+            // Main configuration and state for drag and drop
+            // const dragDropConfig = {
+            //     animation: {
+            //         style: 'smooth',
+            //         smoothDuration: '0.3s',
+            //         smoothTiming: 'ease-out',
+            //         smoothOffset: '-5px'
+            //     },
+            //     positionThreshold: 0.5, // 50% threshold for insertion
+            //     throttleDelay: 30 // Milliseconds for dragover throttling
+            // };
 
             /**
              * Book Positioner - Handles determining where to insert books
              */
-            const BookPositioner = {
-                // Calculate where to insert book based on cursor position
-                getInsertPosition(shelf, clientX) {
-                    const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
+            // const BookPositioner = {
+            //     // Calculate where to insert book based on cursor position
+            //     getInsertPosition(shelf, clientX) {
+            //         const books = [...shelf.querySelectorAll('.book:not(.dragging)')];
 
-                    if (books.length === 0) return null;
+            //         if (books.length === 0) return null;
 
-                    for (const book of books) {
-                        const rect = book.getBoundingClientRect();
-                        // Using the threshold from config
-                        const insertPosition = rect.left + (rect.width * dragDropConfig.positionThreshold);
+            //         for (const book of books) {
+            //             const rect = book.getBoundingClientRect();
+            //             // Using the threshold from config
+            //             const insertPosition = rect.left + (rect.width * dragDropConfig.positionThreshold);
 
-                        if (clientX < insertPosition) {
-                            return book;
-                        }
-                    }
+            //             if (clientX < insertPosition) {
+            //                 return book;
+            //             }
+            //         }
 
-                    return null;
-                }
-            };
+            //         return null;
+            //     }
+            // };
 
             /**
              * Visual Manager - Handles drop indicator and animations
+             *
+             * This component is responsible for:
+             * - Creating and managing the visual drop indicator that shows where books will be placed
+             * - Providing visual feedback during drag operations
+             * - Animating books when they're dropped into a new position
+             * - Throttling visual updates for better performance
              */
             const VisualManager = {
+                dropIndicator: null,
+                lastUpdateTime: 0,
+
+                init() {
+                    // Create drop indicator element
+                    this.dropIndicator = document.createElement('div');
+                    this.dropIndicator.classList.add('drop-indicator');
+                    Object.assign(this.dropIndicator.style, {
+                        position: 'absolute',
+                        width: '4px',
+                        backgroundColor: '#3498db',
+                        display: 'none',
+                        boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
+                        zIndex: 1000
+                    });
+                    document.body.appendChild(this.dropIndicator);
+                },
+
                 hideIndicator() {
-                    dropIndicator.style.display = 'none';
+                    this.dropIndicator.style.display = 'none';
                 },
 
                 // Update indicator position based on calculated insert position
                 updateDropIndicator(shelf, clientX) {
                     // Throttle updates for performance
                     const now = Date.now();
-                    if (now - lastDropIndicatorUpdateTime < dragDropConfig.throttleDelay) {
+                    if (now - this.lastUpdateTime < dragDropConfig.throttleDelay) {
                         return;
                     }
-                    lastDropIndicatorUpdateTime = now;
+                    this.lastUpdateTime = now;
 
                     // Calculate insertion position
                     const insertBeforeElement = BookPositioner.getInsertPosition(shelf, clientX);
@@ -929,21 +848,21 @@
                     if (insertBeforeElement) {
                         // Show indicator before the target book
                         const rect = insertBeforeElement.getBoundingClientRect();
-                        dropIndicator.style.display = 'block';
-                        dropIndicator.style.height = `${rect.height}px`;
-                        dropIndicator.style.top = `${rect.top}px`;
-                        dropIndicator.style.left = `${rect.left - 2}px`;
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.left - 2}px`;
                     } else if (shelf.children.length > 0) {
                         // Show indicator at the end of the shelf
                         const lastBook = shelf.children[shelf.children.length - 1];
                         const rect = lastBook.getBoundingClientRect();
-                        dropIndicator.style.display = 'block';
-                        dropIndicator.style.height = `${rect.height}px`;
-                        dropIndicator.style.top = `${rect.top}px`;
-                        dropIndicator.style.left = `${rect.right + 2}px`;
+                        this.dropIndicator.style.display = 'block';
+                        this.dropIndicator.style.height = `${rect.height}px`;
+                        this.dropIndicator.style.top = `${rect.top}px`;
+                        this.dropIndicator.style.left = `${rect.right + 2}px`;
                     } else {
                         // Empty shelf - no indicator
-                        dropIndicator.style.display = 'none';
+                        this.dropIndicator.style.display = 'none';
                     }
                 },
 
@@ -969,82 +888,177 @@
             };
 
             /**
-             * Set up drag and drop handlers for all shelves
+             * DragDrop Manager - Centralizes drag and drop operations
+             *
+             * This component handles all aspects of book dragging and dropping:
+             * - Sets up books to be draggable with appropriate event handlers
+             * - Configures shelves to accept dropped books
+             * - Creates a MutationObserver to handle dynamically added books
+             * - Manages global event listeners for drag and drop operations
+             * - Coordinates with BookPositioner to calculate insert positions
+             * - Works with VisualManager to provide feedback during drag operations
              */
-            function setupShelfDragHandlers() {
-                const shelves = document.querySelectorAll('.bookshelf-row');
+            const DragDropManager = {
+                init() {
+                    // Set up existing books
+                    document.querySelectorAll('.book').forEach(book => {
+                        this.setupDraggableBook(book);
+                    });
 
-                shelves.forEach(shelf => {
+                    // Set up shelves
+                    document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                        this.setupDroppableShelf(shelf);
+                    });
+
+                    // Create observer for dynamically added books
+                    this.createBookObserver();
+
+                    // Global event listeners
+                    this.setupGlobalListeners();
+                },
+
+                setupDraggableBook(book) {
+                    if (book.hasAttribute('data-drag-initialized')) return;
+
+                    // Make images inside not draggable
+                    book.querySelectorAll('img').forEach(img => img.draggable = false);
+
+                    // Dragstart event
+                    book.addEventListener('dragstart', function (e) {
+                        e.stopPropagation();
+
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', book.dataset.bookId || 'book');
+
+                        book.classList.add('dragging');
+                        book.dataset.sourceShelf = book.parentElement.id;
+                    });
+
+                    // Dragend event
+                    book.addEventListener('dragend', function () {
+                        book.classList.remove('dragging');
+                        VisualManager.hideIndicator();
+                    });
+
+                    book.setAttribute('data-drag-initialized', 'true');
+                },
+
+                setupDroppableShelf(shelf) {
                     // Dragenter - highlight shelf
-                    shelf.addEventListener('dragenter', function(e) {
-                        e.preventDefault(); // Crucial for allowing drops
+                    shelf.addEventListener('dragenter', function (e) {
+                        e.preventDefault();
                         shelf.classList.add('drag-over');
                     });
 
                     // Dragleave - remove highlight
-                    shelf.addEventListener('dragleave', function(e) {
-                        // Only remove highlight if really leaving this shelf
-                        // not just entering a child element
+                    shelf.addEventListener('dragleave', function (e) {
                         if (!shelf.contains(e.relatedTarget)) {
                             shelf.classList.remove('drag-over');
                             VisualManager.hideIndicator();
                         }
                     });
 
-                    // Dragover - allow drop and update indicator
-                    shelf.addEventListener('dragover', function(e) {
-                        // Always prevent default to allow drops
+                    // Dragover - update drop indicator
+                    shelf.addEventListener('dragover', function (e) {
                         e.preventDefault();
                         e.dataTransfer.dropEffect = 'move';
-
-                        // Update drop indicator position
                         VisualManager.updateDropIndicator(this, e.clientX);
                     });
 
-                    // Drop - handle the drop with position-aware insertion
-                    shelf.addEventListener('drop', function(e) {
+                    // Drop - handle position-aware insertion
+                    shelf.addEventListener('drop', function (e) {
                         e.preventDefault();
                         shelf.classList.remove('drag-over');
                         VisualManager.hideIndicator();
 
-                        // Get the dragged book
                         const draggingBook = document.querySelector('.dragging');
-                        if (draggingBook) {
-                            // Determine where to insert the book
-                            const insertBeforeElement = BookPositioner.getInsertPosition(this, e.clientX);
+                        if (!draggingBook) return;
 
-                            // Move the book to this shelf
-                            const position = insertBeforeElement ?
-                                `before ${insertBeforeElement.textContent.trim() || 'another book'}` :
-                                'at end of shelf';
-                            console.log(`Moving book from ${draggingBook.dataset.sourceShelf || 'unknown'} to ${shelf.id || 'shelf'} ${position}`);
+                        // Determine insert position
+                        const insertBeforeElement = BookPositioner.getInsertPosition(this, e.clientX);
 
-                            // Remove from current location
-                            draggingBook.parentElement.removeChild(draggingBook);
+                        // Log position info
+                        const position = insertBeforeElement ?
+                            `before ${insertBeforeElement.textContent.trim() || 'another book'}` :
+                            'at end of shelf';
+                        console.log(`Moving book from ${draggingBook.dataset.sourceShelf || 'unknown'} to ${shelf.id || 'shelf'} ${position}`);
 
-                            // Apply animation
-                            VisualManager.animateBook(draggingBook);
+                        // Remove from current location
+                        draggingBook.parentElement.removeChild(draggingBook);
 
-                            // Add to new position in shelf
-                            if (insertBeforeElement) {
-                                shelf.insertBefore(draggingBook, insertBeforeElement);
-                            } else {
-                                shelf.appendChild(draggingBook);
+                        // Insert at new position
+                        if (insertBeforeElement) {
+                            shelf.insertBefore(draggingBook, insertBeforeElement);
+                        } else {
+                            shelf.appendChild(draggingBook);
+                        }
+
+                        // Apply animation
+                        VisualManager.animateBook(draggingBook);
+
+                        // Save bookshelf order for persistence
+                        saveBookshelfOrder();
+                    });
+                },
+
+                createBookObserver() {
+                    const self = this;
+                    const observer = new MutationObserver(mutations => {
+                        mutations.forEach(mutation => {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach(node => {
+                                    if (node.nodeType === 1 && node.classList.contains('book') && !node.hasAttribute('data-drag-initialized')) {
+                                        self.setupDraggableBook(node);
+                                    }
+                                });
                             }
+                        });
+                    });
+
+                    document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                        observer.observe(shelf, { childList: true });
+                    });
+                },
+
+                setupGlobalListeners() {
+                    // Prevent drops outside shelves
+                    document.addEventListener('dragover', function (e) {
+                        if (!e.target.closest('.bookshelf-row')) {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'none';
                         }
                     });
-                });
 
-                // Global event listeners for cleanup
-                document.addEventListener('dragend', function() {
-                    VisualManager.hideIndicator();
-                });
+                    // Hide indicator for drops outside shelves
+                    document.addEventListener('drop', function (e) {
+                        if (!e.target.closest('.bookshelf-row')) {
+                            e.preventDefault();
+                            VisualManager.hideIndicator();
+                        }
+                    });
 
-                document.addEventListener('drop', function(e) {
-                    if (!e.target.closest('.bookshelf-row')) {
+                    // Extra safety for indicator hiding
+                    document.addEventListener('dragend', function () {
                         VisualManager.hideIndicator();
-                    }
-                });
+                    });
+                }
+            };
+
+            /**
+             * Set up drag and drop handlers for all shelves
+             *
+             * This function initializes the drag and drop functionality by:
+             * - Setting up the VisualManager to provide visual feedback during drag operations
+             * - Initializing the DragDropManager to handle all book drag and drop functionality
+             * - Creating a centralized system that works consistently across browsers
+             * - Ensuring all books have proper drag and drop event handlers
+             */
+            function setupShelfDragHandlers() {
+                // Initialize the Visual Manager first
+                VisualManager.init();
+
+                // Initialize the DragDropManager to handle all drag and drop operations
+                DragDropManager.init();
             }
         });
     </script>
