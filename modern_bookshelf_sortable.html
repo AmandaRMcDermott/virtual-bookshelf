@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Bookshelf - Smooth Sortable Drag and Drop</title>
+
+    <!-- SortableJS - Smooth drag and drop library -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <style>
+        /* Main application styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            background-color: #34495e;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #57ce8cff;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+            background-color: #34495e;
+            color: white;
+        }
+
+        /* Bookshelf styles */
+        .bookshelf-container {
+            margin-top: 20px;
+        }
+
+        .bookshelf {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .bookshelf-row {
+            width: 100%;
+            white-space: nowrap;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            padding: 8px 5px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #e0c8ad;
+            border: 5px solid #8b4513;
+            transition: background-color 0.3s ease;
+            position: relative;
+            align-items: flex-end;
+            min-height: 150px;
+        }
+
+        .bookshelf-row::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background-color: #8b4513;
+            border-radius: 0 0 5px 5px;
+            z-index: 0;
+        }
+
+        /* Sortable.js specific styles */
+        .sortable-ghost {
+            opacity: 0.3;
+        }
+
+        .sortable-drag {
+            opacity: 1;
+            cursor: grabbing;
+            z-index: 9999;
+        }
+
+        /* Visual feedback when dragging over shelf */
+        .bookshelf-row.sortable-drag-over {
+            background-color: #f5deb3;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+        }
+
+        .book {
+            display: inline-flex;
+            flex-shrink: 0;
+            position: relative;
+            cursor: grab;
+            margin-right: 2px;
+            margin-bottom: 0;
+            z-index: 1;
+            /* Smooth transitions for when books move out of the way */
+            transition: transform 250ms cubic-bezier(0.2, 0, 0, 1);
+            will-change: transform;
+        }
+
+        /* Smooth animation for books moving during drag */
+        .book:not(.sortable-chosen):not(.sortable-drag) {
+            transition: transform 250ms cubic-bezier(0.2, 0, 0, 1),
+                        box-shadow 200ms ease;
+        }
+
+        .book:active {
+            cursor: grabbing;
+        }
+
+        /* Chosen item style - the item being dragged */
+        .sortable-chosen {
+            /* transform: rotate(2deg) scale(1.05); */
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            /* box-shadow: inset 0 0 1px rgba(0,0,0,0.4), 0 0 0 1px rgba(63, 63, 68, 0.05), 0 1px 3px 0 rgba(34, 33, 81, 0.15); */
+            transition: none !important; /* Disable transition for dragged item for immediate response */
+        }
+
+        /* Item actively being dragged */
+        .sortable-drag {
+            transition: none !important; /* No transition for the dragged item itself */
+        }
+
+        /* Book spine styles */
+        .book-spine {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            height: 150px;
+            width: 30px;
+            color: white;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            text-align: center;
+            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .spine-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+
+        /* Controls panel */
+        .controls-panel {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .controls-panel h3 {
+            margin-top: 0;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .upload-control input[type="file"] {
+            display: none;
+        }
+
+        .select-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Placeholder for where item will be dropped */
+        .sortable-placeholder {
+            background-color: transparent;
+            border: 2px solid transparent;
+            border-radius: 3px;
+            margin-right: 2px;
+            transition: all 250ms cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        /* Animation for books moving apart */
+        .book.sortable-swap-highlight {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Enhanced book spine transitions */
+        .book-spine {
+            transition: box-shadow 200ms ease;
+        }
+
+        /* Subtle highlight on books as you drag near them */
+        .book:not(.sortable-chosen):hover .book-spine {
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Smooth sliding animation for bookshelf when items are being rearranged */
+        .bookshelf-row.sortable-drag-active {
+            transition: all 250ms cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        /* Make margins animate smoothly too */
+        .book {
+            transition-property: transform, opacity, margin, box-shadow;
+        }
+
+        /* Ensure ghost placeholder animates smoothly into position */
+        .sortable-ghost {
+            opacity: 0.3;
+            transition: opacity 150ms ease, transform 250ms cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        /* Add a subtle scale to books adjacent to the drag position */
+        .bookshelf-row:has(.sortable-chosen) .book:not(.sortable-chosen) {
+            transition: transform 250ms cubic-bezier(0.2, 0, 0, 1),
+                        box-shadow 200ms ease,
+                        opacity 200ms ease;
+        }
+
+        /* Info banner */
+        .info-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-banner h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+        }
+
+        .info-banner p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Virtual Bookshelf - Smooth Sortable</h1>
+        <div class="controls">
+            <button id="add-book-btn">Add Sample Book</button>
+            <button id="add-shelf-btn">Add New Shelf</button>
+            <button id="clear-all-btn">Clear All</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="bookshelf-container">
+            <div class="info-banner">
+                <h3>✨ Ultra-Smooth Drag & Drop</h3>
+                <p>• Drag books to reorder them on any shelf</p>
+                <p>• Watch books smoothly glide apart to preview where your book will land</p>
+                <p>• Move books between shelves with buttery-smooth fluid animations</p>
+                <p>• Experience seamless transitions as books elegantly make space</p>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Upload Book Spine Images</h3>
+                <div class="upload-control">
+                    <input type="file" id="spine-file-input" multiple accept="image/*">
+                    <button id="select-files-btn" class="select-button">Choose Files</button>
+                </div>
+                <div id="selected-files-list" style="margin-top: 10px;">
+                    <p>No files selected</p>
+                </div>
+            </div>
+
+            <div class="bookshelf" id="main-bookshelf">
+                <div class="bookshelf-row" id="shelf-1"></div>
+                <div class="bookshelf-row" id="shelf-2"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Virtual Bookshelf - Smooth Sortable Edition</p>
+    </footer>
+
+    <script>
+        // Book colors for sample books
+        const bookColors = [
+            '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c',
+            '#f39c12', '#d35400', '#c0392b', '#16a085', '#27ae60',
+            '#2980b9', '#8e44ad', '#f1c40f', '#e67e22', '#95a5a6'
+        ];
+
+        // Book titles for sample books
+        const bookTitles = [
+            'The Great Adventure', 'Mystery of the Deep', 'Starry Night',
+            'The Lost Treasure', 'Beyond the Horizon', 'Winter Dreams',
+            'Summer Days', 'Autumn Leaves', 'Spring Flowers', 'Mountain Peak',
+            'Ocean Waves', 'Desert Sands', 'Forest Whispers', 'City Lights',
+            'River Flow', 'The Hidden Path', 'Secret Garden', 'Ancient Scrolls'
+        ];
+
+        let bookCounter = 1;
+        let sortableInstances = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize sortable for existing shelves
+            initializeSortable();
+
+            // Add some sample books to start
+            addSampleBook('shelf-1');
+            addSampleBook('shelf-1');
+            addSampleBook('shelf-1');
+            addSampleBook('shelf-2');
+            addSampleBook('shelf-2');
+
+            // Set up event listeners
+            document.getElementById('add-book-btn').addEventListener('click', () => addSampleBook('shelf-1'));
+            document.getElementById('add-shelf-btn').addEventListener('click', addNewShelf);
+            document.getElementById('clear-all-btn').addEventListener('click', clearAllShelves);
+            document.getElementById('select-files-btn').addEventListener('click', function () {
+                document.getElementById('spine-file-input').click();
+            });
+            document.getElementById('spine-file-input').addEventListener('change', handleFileSelection);
+        });
+
+        /**
+         * Initialize SortableJS on all bookshelves
+         * This creates the smooth drag and drop functionality with visual feedback
+         */
+        function initializeSortable() {
+            const shelves = document.querySelectorAll('.bookshelf-row');
+
+            shelves.forEach(shelf => {
+                // Skip if already initialized
+                if (shelf.hasAttribute('data-sortable-initialized')) return;
+
+                const sortable = Sortable.create(shelf, {
+                    group: 'books', // Allow dragging between shelves
+                    animation: 250, // Animation speed in ms - matches CSS transition
+                    easing: 'cubic-bezier(0.2, 0, 0, 1)', // Smooth easing - matches CSS for fluid motion
+                    ghostClass: 'sortable-ghost', // Class for the drop placeholder
+                    chosenClass: 'sortable-chosen', // Class for the chosen item
+                    dragClass: 'sortable-drag', // Class for the dragging item
+
+                    // Enhanced animation settings
+                    forceFallback: false, // Use HTML5 drag and drop if available
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65, // Threshold for swap mode
+                    invertSwap: false, // Don't invert swap when moving
+                    direction: 'horizontal', // Optimize for horizontal sorting
+                    bubbleScroll: true, // Enable auto-scroll when near edges
+
+                    // Callbacks
+                    onStart: function (evt) {
+                        // Add visual feedback when drag starts
+                        document.querySelectorAll('.bookshelf-row').forEach(s => {
+                            if (s !== evt.from) {
+                                s.style.outline = '2px dashed #3498db';
+                                s.style.outlineOffset = '5px';
+                            }
+                            // Add class for smooth animations during drag
+                            s.classList.add('sortable-drag-active');
+                        });
+                    },
+
+                    onEnd: function (evt) {
+                        // Remove visual feedback when drag ends
+                        document.querySelectorAll('.bookshelf-row').forEach(s => {
+                            s.style.outline = '';
+                            s.style.outlineOffset = '';
+                            // Remove drag active class
+                            s.classList.remove('sortable-drag-active');
+                            s.classList.remove('sortable-drag-over');
+                        });
+
+                        // Save the new order
+                        saveBookshelfOrder();
+
+                        // Log the move for debugging
+                        console.log(`Moved book from shelf ${evt.from.id} to ${evt.to.id}, position ${evt.newIndex}`);
+                    },
+
+                    // Update visual feedback when dragging over different shelves
+                    onMove: function (evt) {
+                        const toShelf = evt.to;
+                        const fromShelf = evt.from;
+
+                        // Add highlight to target shelf
+                        if (toShelf !== fromShelf) {
+                            toShelf.classList.add('sortable-drag-over');
+                        }
+
+                        return true; // Allow the move
+                    },
+
+                    onChange: function (evt) {
+                        // This fires when the order changes while dragging
+                        // Books automatically part to show where the dragged book will go
+                    }
+                });
+
+                sortableInstances.push(sortable);
+                shelf.setAttribute('data-sortable-initialized', 'true');
+            });
+
+            console.log('Sortable initialized on all shelves');
+        }
+
+        /**
+         * Add a new sample book to a specific shelf
+         */
+        function addSampleBook(shelfId) {
+            const shelf = document.getElementById(shelfId) || document.querySelector('.bookshelf-row');
+            if (!shelf) return;
+
+            const bookId = `book-${bookCounter++}`;
+            const color = bookColors[Math.floor(Math.random() * bookColors.length)];
+            const title = bookTitles[Math.floor(Math.random() * bookTitles.length)];
+
+            const book = document.createElement('div');
+            book.className = 'book';
+            book.id = bookId;
+
+            const spine = document.createElement('div');
+            spine.className = 'book-spine';
+            spine.style.backgroundColor = color;
+            spine.textContent = title;
+
+            book.appendChild(spine);
+            shelf.appendChild(book);
+
+            // Add entrance animation
+            book.style.transform = 'scale(0.8)';
+            book.style.opacity = '0';
+            setTimeout(() => {
+                book.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                book.style.transform = 'scale(1)';
+                book.style.opacity = '1';
+                setTimeout(() => {
+                    book.style.transition = '';
+                }, 300);
+            }, 10);
+
+            saveBookshelfOrder();
+        }
+
+        /**
+         * Add a new bookshelf row
+         */
+        function addNewShelf() {
+            const bookshelf = document.getElementById('main-bookshelf');
+            const shelfCount = bookshelf.querySelectorAll('.bookshelf-row').length;
+
+            const newShelf = document.createElement('div');
+            newShelf.className = 'bookshelf-row';
+            newShelf.id = `shelf-${shelfCount + 1}`;
+
+            bookshelf.appendChild(newShelf);
+
+            // Initialize sortable on the new shelf
+            const sortable = Sortable.create(newShelf, {
+                group: 'books',
+                animation: 250, // Matches CSS transition timing
+                easing: 'cubic-bezier(0.2, 0, 0, 1)', // Smooth easing
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                forceFallback: false,
+                fallbackOnBody: true,
+                swapThreshold: 0.65,
+                invertSwap: false,
+                direction: 'horizontal',
+                bubbleScroll: true,
+
+                onStart: function (evt) {
+                    document.querySelectorAll('.bookshelf-row').forEach(s => {
+                        if (s !== evt.from) {
+                            s.style.outline = '2px dashed #3498db';
+                            s.style.outlineOffset = '5px';
+                        }
+                        s.classList.add('sortable-drag-active');
+                    });
+                },
+
+                onEnd: function (evt) {
+                    document.querySelectorAll('.bookshelf-row').forEach(s => {
+                        s.style.outline = '';
+                        s.style.outlineOffset = '';
+                        s.classList.remove('sortable-drag-active');
+                        s.classList.remove('sortable-drag-over');
+                    });
+                    saveBookshelfOrder();
+                }
+            });
+
+            sortableInstances.push(sortable);
+            newShelf.setAttribute('data-sortable-initialized', 'true');
+
+            // Add entrance animation
+            newShelf.style.transform = 'translateY(-20px)';
+            newShelf.style.opacity = '0';
+            setTimeout(() => {
+                newShelf.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                newShelf.style.transform = 'translateY(0)';
+                newShelf.style.opacity = '1';
+                setTimeout(() => {
+                    newShelf.style.transition = '';
+                }, 300);
+            }, 10);
+        }
+
+        /**
+         * Clear all shelves
+         */
+        function clearAllShelves() {
+            if (confirm('Are you sure you want to clear all books from all shelves?')) {
+                document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                    while (shelf.firstChild) {
+                        shelf.removeChild(shelf.firstChild);
+                    }
+                });
+                localStorage.removeItem('bookshelfOrder');
+            }
+        }
+
+        /**
+         * Handle file selection for book spine images
+         */
+        function handleFileSelection() {
+            const fileInput = document.getElementById('spine-file-input');
+            const selectedFilesList = document.getElementById('selected-files-list');
+            const files = fileInput.files;
+
+            if (files.length > 0) {
+                selectedFilesList.innerHTML = '';
+
+                Array.from(files).forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    selectedFilesList.appendChild(fileItem);
+
+                    processSpineImage(file);
+                });
+            } else {
+                selectedFilesList.innerHTML = '<p>No files selected</p>';
+            }
+        }
+
+        /**
+         * Process a spine image file
+         */
+        function processSpineImage(file) {
+            const imageUrl = URL.createObjectURL(file);
+            const img = new Image();
+
+            img.onload = function () {
+                createBookWithSpineImage({
+                    fileName: file.name,
+                    url: imageUrl,
+                    width: Math.max(30, Math.floor(img.width * 0.2)),
+                    height: Math.max(120, Math.floor(img.height * 0.2))
+                });
+            };
+            img.src = imageUrl;
+        }
+
+        /**
+         * Create a book with a spine image
+         */
+        function createBookWithSpineImage(spineData) {
+            const shelf = document.querySelector('.bookshelf-row');
+            if (!shelf) return;
+
+            const bookId = `book-${bookCounter++}-${spineData.fileName.replace(/[^a-z0-9]/gi, '-')}`;
+
+            const book = document.createElement('div');
+            book.className = 'book';
+            book.id = bookId;
+
+            const spine = document.createElement('div');
+            spine.className = 'book-spine';
+            spine.style.width = `${spineData.width}px`;
+            spine.style.height = `${spineData.height}px`;
+
+            const spineImg = document.createElement('img');
+            spineImg.src = spineData.url;
+            spineImg.alt = `Book spine for ${spineData.fileName}`;
+            spineImg.className = 'spine-image';
+
+            spine.appendChild(spineImg);
+            book.appendChild(spine);
+            shelf.appendChild(book);
+
+            // Add entrance animation
+            book.style.transform = 'scale(0.8) translateY(-20px)';
+            book.style.opacity = '0';
+            setTimeout(() => {
+                book.style.transition = 'transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease';
+                book.style.transform = 'scale(1) translateY(0)';
+                book.style.opacity = '1';
+                setTimeout(() => {
+                    book.style.transition = '';
+                }, 400);
+            }, 10);
+
+            saveBookshelfOrder();
+        }
+
+        /**
+         * Save the bookshelf order to localStorage
+         */
+        function saveBookshelfOrder() {
+            const shelves = document.querySelectorAll('.bookshelf-row');
+            const order = {};
+
+            shelves.forEach((shelf, shelfIndex) => {
+                const bookIds = [];
+                shelf.querySelectorAll('.book').forEach(book => {
+                    bookIds.push(book.id);
+                });
+                order[shelf.id] = bookIds;
+            });
+
+            localStorage.setItem('bookshelfOrder', JSON.stringify(order));
+            console.log('Saved bookshelf order:', order);
+        }
+
+        /**
+         * Load bookshelf order from localStorage
+         */
+        function loadBookshelfOrder() {
+            const savedOrder = localStorage.getItem('bookshelfOrder');
+            if (savedOrder) {
+                try {
+                    const order = JSON.parse(savedOrder);
+                    console.log('Loaded bookshelf order:', order);
+                    // TODO: Implement restoration of book order
+                } catch (e) {
+                    console.error('Failed to parse saved order:', e);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
