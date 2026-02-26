@@ -272,6 +272,14 @@
         .bookshelf {
             width: 100%;
             box-sizing: border-box;
+            background-color: #d4a574;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .bookshelf {
+            background-color: #8b6f47;
         }
 
         .bookshelf-row {
@@ -281,7 +289,6 @@
             display: flex;
             flex-wrap: nowrap;
             flex-direction: row !important;
-            flex-wrap: nowrap !important;
             padding: 8px 2px;
             background: var(--bg-shelf);
             border: 8px solid var(--border-shelf);
@@ -289,6 +296,11 @@
             position: relative;
             align-items: flex-end;
             min-height: 150px;
+            margin-bottom: 20px;
+        }
+
+        .bookshelf-row:last-child {
+            margin-bottom: 0;
         }
 
         .bookshelf-row::before {
@@ -324,7 +336,7 @@
             background:
                 linear-gradient(0deg, rgba(111, 58, 31, 1), transparent 70%),
                 /* linear-gradient(0deg, rgba(111, 58, 31, 0.9), transparent 0%), */
-                linear-gradient(180deg, rgba(245, 222, 179, 0.3), transparent 100%);
+                linear-gradient(180deg, rgba(245, 222, 179, 0.8), transparent 100%);
             /* background: linear-gradient(180deg, rgba(111, 58, 31, 0.8), rgba(245, 222, 179, 0.3)); */
             /* background: linear-gradient(0deg, rgba(111, 58, 31, 1), rgba(245, 222, 179, 0.3)); */
             /* color: rgba(245, 222, 179, 1); */
@@ -564,7 +576,7 @@
     <main class="app-container">
         <div class="bookshelf-main-area">
             <div class="bookshelf-container">
-            <!-- <div class="info-banner">
+                <!-- <div class="info-banner">
                 <h3>✨ Ultra-Smooth Drag & Drop</h3>
                 <p>• Drag books to reorder them on any shelf</p>
                 <p>• Watch books smoothly glide apart to preview where your book will land</p>
@@ -572,29 +584,30 @@
                 <p>• Experience seamless transitions as books elegantly make space</p>
             </div> -->
 
-            <div class="controls-panel">
-                <h3>Upload Book Spine Images</h3>
-                <div class="upload-control">
-                    <input type="file" id="spine-file-input" multiple accept="image/*">
-                    <button id="select-files-btn" class="select-button">Choose Files</button>
+                <div class="controls-panel">
+                    <h3>Upload Book Spine Images</h3>
+                    <div class="upload-control">
+                        <input type="file" id="spine-file-input" multiple accept="image/*">
+                        <button id="select-files-btn" class="select-button">Choose Files</button>
+                    </div>
+                    <div id="selected-files-list" style="margin-top: 10px;">
+                        <p>No files selected</p>
+                    </div>
                 </div>
-                <div id="selected-files-list" style="margin-top: 10px;">
-                    <p>No files selected</p>
-                </div>
-            </div>
 
-            <div class="bookshelf" id="main-bookshelf">
-                <div class="bookshelf-row" id="shelf-1"></div>
-                <div class="bookshelf-row" id="shelf-2"></div>
-            </div>
-        </div> <!-- .bookshelf-container -->
+                <div class="bookshelf" id="main-bookshelf">
+                    <div class="bookshelf-row" id="shelf-1"></div>
+                    <div class="bookshelf-row" id="shelf-2"></div>
+                </div>
+            </div> <!-- .bookshelf-container -->
         </div> <!-- .bookshelf-main-area -->
 
         <!-- Right Side Panel -->
         <aside id="side-panel" class="side-panel">
             <!-- Settings Section -->
             <div class="settings-section">
-                <button class="settings-header" id="settings-header" aria-expanded="true" aria-controls="settings-content">
+                <button class="settings-header" id="settings-header" aria-expanded="true"
+                    aria-controls="settings-content">
                     <span>⚙️ Settings</span>
                     <span class="toggle-arrow" aria-hidden="true">▼</span>
                 </button>
@@ -602,13 +615,15 @@
                     <div class="setting-group">
                         <label for="dpi-input">Screen DPI:</label>
                         <input type="number" id="dpi-input" value="96" min="50" max="300">
-                        <button id="calibrate-btn" class="small-btn" aria-label="Calibrate screen DPI">Calibrate</button>
+                        <button id="calibrate-btn" class="small-btn"
+                            aria-label="Calibrate screen DPI">Calibrate</button>
                     </div>
                     <div class="setting-group">
                         <label for="default-shelf-height">Default Shelf Height (inches):</label>
                         <input type="number" id="default-shelf-height" value="12" min="6" max="24" step="0.5">
                     </div>
-                    <button id="reset-settings-btn" class="small-btn" aria-label="Reset all settings to default values">Reset to Defaults</button>
+                    <button id="reset-settings-btn" class="small-btn"
+                        aria-label="Reset all settings to default values">Reset to Defaults</button>
                 </div>
             </div>
 
