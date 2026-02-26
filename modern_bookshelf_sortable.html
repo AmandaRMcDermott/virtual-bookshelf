@@ -206,6 +206,19 @@
             margin-right: 10px;
         }
 
+        .setting-group input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .setting-group small {
+            display: block;
+            color: var(--text-primary);
+            opacity: 0.7;
+            margin-top: 5px;
+            font-size: 0.75rem;
+        }
+
         .small-btn {
             padding: 6px 12px;
             font-size: 0.85rem;
@@ -248,30 +261,33 @@
             font-size: 0.8rem;
         }
 
+        /* Books in temporary holding - proportional scaling */
         .holding-area {
-            padding: 15px;
+            padding: 10px;
             flex: 1;
             overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
             align-content: start;
         }
 
-        /* Books in temporary holding - smaller display */
         .holding-area .book {
             margin: 0;
+            flex-shrink: 0;
         }
 
         .holding-area .book-spine {
-            width: 60px !important;
-            height: 80px !important;
-            font-size: 0.6rem;
+            /* Scale down to 25% while maintaining aspect ratio */
+            transform: scale(0.25);
+            transform-origin: top left;
+            font-size: 0.5rem;
         }
 
         .holding-area .spine-image {
             width: 100%;
             height: 100%;
+            object-fit: contain;
         }
 
         /* Responsive design */
@@ -295,6 +311,7 @@
         }
 
         body.dark-mode .bookshelf {
+            /* Outer rim of the bookshelf */
             background-color: #8b6f47;
         }
 
@@ -638,6 +655,13 @@
                         <label for="default-shelf-height">Default Shelf Height (inches):</label>
                         <input type="number" id="default-shelf-height" value="12" min="6" max="24" step="0.5">
                     </div>
+                    <div class="setting-group">
+                        <label for="scale-slider">Display Scale: <span id="scale-value">50</span>%</label>
+                        <input type="range" id="scale-slider" min="10" max="200" value="50" step="5">
+                        <small style="display: block; color: var(--text-primary); opacity: 0.7; margin-top: 5px;">
+                            (% of life-size. 50% = half size, 100% = actual size on screen)
+                        </small>
+                    </div>
                     <button id="reset-settings-btn" class="small-btn"
                         aria-label="Reset all settings to default values">Reset to Defaults</button>
                 </div>
@@ -732,6 +756,7 @@
         let currentDPI = 96;
         let defaultShelfHeight = 12;
         let booksMetadata = {};
+        let displayScale = 50; // Default to 50% of life-size
 
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize sortable for existing shelves
@@ -763,6 +788,7 @@
             document.getElementById('settings-header').addEventListener('click', toggleSettings);
             document.getElementById('dpi-input').addEventListener('change', handleDPIChange);
             document.getElementById('default-shelf-height').addEventListener('change', handleDefaultHeightChange);
+            document.getElementById('scale-slider').addEventListener('input', handleScaleChange);
             // TODO: Uncomment when openCalibrationModal is implemented (Task 8)
             // document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
             document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
@@ -1057,8 +1083,8 @@
 
             const spine = document.createElement('div');
             spine.className = 'book-spine';
-            spine.style.width = `${spineData.displayWidth}px`;
-            spine.style.height = `${spineData.displayHeight}px`;
+            spine.style.width = `${spineData.displayWidth * (displayScale / 100)}px`;
+            spine.style.height = `${spineData.displayHeight * (displayScale / 100)}px`;
 
             const spineImg = document.createElement('img');
             spineImg.src = spineData.url;
@@ -1118,6 +1144,13 @@
                 }
             }
 
+            const savedScale = localStorage.getItem('bookshelf-display-scale');
+            if (savedScale) {
+                displayScale = parseInt(savedScale);
+                document.getElementById('scale-slider').value = displayScale;
+                document.getElementById('scale-value').textContent = displayScale;
+            }
+
             console.log('Settings loaded:', { currentDPI, defaultShelfHeight });
         }
 
@@ -1158,6 +1191,18 @@
         }
 
         /**
+         * Handle display scale slider change
+         */
+        function handleScaleChange(event) {
+            const newScale = parseInt(event.target.value);
+            displayScale = newScale;
+            document.getElementById('scale-value').textContent = newScale;
+            localStorage.setItem('bookshelf-display-scale', displayScale);
+            recalculateAllBookSizes();
+            console.log('Display scale updated to:', displayScale + '%');
+        }
+
+        /**
          * Recalculate all book sizes based on current DPI
          */
         function recalculateAllBookSizes() {
@@ -1166,8 +1211,8 @@
                 const metadata = booksMetadata[bookId];
 
                 if (metadata && metadata.physicalWidth && metadata.physicalHeight) {
-                    const displayWidth = metadata.physicalWidth * currentDPI;
-                    const displayHeight = metadata.physicalHeight * currentDPI;
+                    const displayWidth = (metadata.physicalWidth * currentDPI) * (displayScale / 100);
+                    const displayHeight = (metadata.physicalHeight * currentDPI) * (displayScale / 100);
 
                     const spine = book.querySelector('.book-spine');
                     if (spine) {
@@ -1185,10 +1230,14 @@
             if (confirm('Reset all settings to defaults?')) {
                 currentDPI = 96;
                 defaultShelfHeight = 12;
+                displayScale = 50;
                 document.getElementById('dpi-input').value = currentDPI;
                 document.getElementById('default-shelf-height').value = defaultShelfHeight;
+                document.getElementById('scale-slider').value = displayScale;
+                document.getElementById('scale-value').textContent = displayScale;
                 localStorage.setItem('bookshelf-dpi', currentDPI);
                 localStorage.setItem('bookshelf-default-shelf-height', defaultShelfHeight);
+                localStorage.setItem('bookshelf-display-scale', displayScale);
                 recalculateAllBookSizes();
             }
         }
@@ -1209,15 +1258,15 @@
                 forceFallback: false,
                 fallbackOnBody: true,
 
-                onAdd: function(evt) {
+                onAdd: function (evt) {
                     updateHoldingCount();
                 },
 
-                onRemove: function(evt) {
+                onRemove: function (evt) {
                     updateHoldingCount();
                 },
 
-                onEnd: function(evt) {
+                onEnd: function (evt) {
                     saveBookshelfOrder();
                 }
             });
