@@ -441,6 +441,14 @@
                         <div class="value-display">Thinner ⟷ Thicker</div>
                     </div>
 
+                    <div class="control-group">
+                        <label for="display-scale-slider">Display Scale: <span id="display-scale-value">50</span>%</label>
+                        <input type="range" id="display-scale-slider" min="10" max="200" value="50" step="5">
+                        <small style="display: block; color: var(--text-primary); opacity: 0.7; margin-top: 5px;">
+                            (% of life-size. 50% = half size, 100% = actual size on screen)
+                        </small>
+                    </div>
+
                     <div class="control-buttons">
                         <button class="reset" id="reset-dimensions">Reset to Default</button>
                         <button class="apply" id="apply-dimensions">Apply Changes</button>
@@ -961,10 +969,11 @@
 
                 // Calculate dimensions
                 const currentDimensions = getCurrentDimensions();
+                const displayScaleFactor = (currentDimensions.displayScale || 50) / 100;
                 const scaledWidth = Math.round(spineData.dimensions.width *
-                    currentDimensions.scaleFactor * currentDimensions.widthFactor);
+                    currentDimensions.scaleFactor * currentDimensions.widthFactor * displayScaleFactor);
                 const scaledHeight = Math.round(spineData.dimensions.height *
-                    currentDimensions.scaleFactor * currentDimensions.heightFactor);
+                    currentDimensions.scaleFactor * currentDimensions.heightFactor * displayScaleFactor);
 
                 // Set book dimensions
                 book.style.width = `${scaledWidth}px`;
@@ -1077,9 +1086,11 @@
                 const scaleSlider = document.getElementById('scale-factor');
                 const heightSlider = document.getElementById('height-factor');
                 const widthSlider = document.getElementById('width-factor');
+                const displayScaleSlider = document.getElementById('display-scale-slider');
                 const scaleValue = document.getElementById('scale-value');
                 const heightValue = document.getElementById('height-value');
                 const widthValue = document.getElementById('width-value');
+                const displayScaleValue = document.getElementById('display-scale-value');
                 const resetBtn = document.getElementById('reset-dimensions');
                 const applyBtn = document.getElementById('apply-dimensions');
                 const collapseToggle = document.getElementById('collapse-toggle');
@@ -1126,17 +1137,23 @@
                     widthValue.textContent = this.value + '%';
                 });
 
+                displayScaleSlider.addEventListener('input', function () {
+                    displayScaleValue.textContent = this.value + '%';
+                });
+
                 // Reset button event
                 resetBtn.addEventListener('click', function () {
                     scaleSlider.value = 25;
                     heightSlider.value = 100;
                     widthSlider.value = 100;
+                    displayScaleSlider.value = 50;
                     scaleValue.textContent = '25%';
                     heightValue.textContent = '100%';
                     widthValue.textContent = '100%';
+                    displayScaleValue.textContent = '50%';
 
                     // Trigger the apply function with default values
-                    applyDimensionChanges(0.25, 1.0, 1.0);
+                    applyDimensionChanges(0.25, 1.0, 1.0, 50);
                 });
 
                 // Apply button event
@@ -1144,30 +1161,33 @@
                     const scale = parseInt(scaleSlider.value) / 100;
                     const height = parseInt(heightSlider.value) / 100;
                     const width = parseInt(widthSlider.value) / 100;
-                    applyDimensionChanges(scale, height, width);
+                    const displayScale = parseInt(displayScaleSlider.value);
+                    applyDimensionChanges(scale, height, width, displayScale);
                 });
 
                 // Save dimension settings to localStorage
-                function saveDimensionSettings(scale, height, width) {
+                function saveDimensionSettings(scale, height, width, displayScale) {
                     const settings = {
                         scaleFactor: scale,
                         heightFactor: height,
-                        widthFactor: width
+                        widthFactor: width,
+                        displayScale: displayScale || 50
                     };
                     localStorage.setItem('bookshelfDimensions', JSON.stringify(settings));
                 }
 
                 // Apply dimension changes to all books
-                function applyDimensionChanges(scaleFactor, heightFactor, widthFactor) {
+                function applyDimensionChanges(scaleFactor, heightFactor, widthFactor, displayScale) {
                     // Save settings
-                    saveDimensionSettings(scaleFactor, heightFactor, widthFactor);
+                    saveDimensionSettings(scaleFactor, heightFactor, widthFactor, displayScale);
 
                     // Create and dispatch a custom event
                     const event = new CustomEvent('dimensionsChanged', {
                         detail: {
                             scaleFactor: scaleFactor,
                             heightFactor: heightFactor,
-                            widthFactor: widthFactor
+                            widthFactor: widthFactor,
+                            displayScale: displayScale || 50
                         }
                     });
                     document.dispatchEvent(event);
@@ -1184,9 +1204,11 @@
                         scaleSlider.value = Math.round(settings.scaleFactor * 100);
                         heightSlider.value = Math.round(settings.heightFactor * 100);
                         widthSlider.value = Math.round(settings.widthFactor * 100);
+                        displayScaleSlider.value = settings.displayScale || 50;
                         scaleValue.textContent = Math.round(settings.scaleFactor * 100) + '%';
                         heightValue.textContent = Math.round(settings.heightFactor * 100) + '%';
                         widthValue.textContent = Math.round(settings.widthFactor * 100) + '%';
+                        displayScaleValue.textContent = (settings.displayScale || 50) + '%';
                     }
                 }
 
@@ -1208,10 +1230,11 @@
                     const spineData = JSON.parse(book.dataset.spineData || '{}');
                     if (spineData.dimensions) {
                         // Calculate new scaled dimensions
+                        const displayScaleFactor = (currentDimensions.displayScale || 50) / 100;
                         const scaledWidth = Math.round(spineData.dimensions.width *
-                            currentDimensions.scaleFactor * currentDimensions.widthFactor);
+                            currentDimensions.scaleFactor * currentDimensions.widthFactor * displayScaleFactor);
                         const scaledHeight = Math.round(spineData.dimensions.height *
-                            currentDimensions.scaleFactor * currentDimensions.heightFactor);
+                            currentDimensions.scaleFactor * currentDimensions.heightFactor * displayScaleFactor);
 
                         // Apply new dimensions to book and its spine
                         book.style.width = `${scaledWidth}px`;

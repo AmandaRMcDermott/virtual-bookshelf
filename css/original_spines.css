@@ -264,47 +264,7 @@ body {
     margin-top: 3px;
 }
 
-/* Resize handles */
-.resize-handle {
-    position: absolute;
-    background-color: rgba(52, 152, 219, 0.5);
-    z-index: 10;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.book:hover .resize-handle {
-    opacity: 0.7;
-}
-
-.resize-handle.right {
-    width: 5px;
-    height: 50%;
-    right: -3px;
-    top: 25%;
-    cursor: ew-resize;
-}
-
-.resize-handle.bottom {
-    width: 50%;
-    height: 5px;
-    bottom: -3px;
-    left: 25%;
-    cursor: ns-resize;
-}
-
-.resize-handle.corner {
-    width: 12px;
-    height: 12px;
-    bottom: -6px;
-    right: -6px;
-    border-radius: 6px;
-    cursor: nwse-resize;
-}
-
-.resize-handle:hover {
-    opacity: 1;
-}
+/* Resize handles - removed */
 
 /* Book info panel mode buttons */
 .book-info-modes {
@@ -676,4 +636,33 @@ button.apply:hover {
     min-height: 150px;
     background-color: #e8e8e8;
     border-radius: 4px;
+}
+
+/* Temporary holding area styles - proportional scaling */
+.holding-area {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-content: start;
+}
+
+.holding-area .book {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.holding-area .book-spine {
+    /* Scale down to 25% of shelf size while maintaining aspect ratio */
+    transform: scale(0.25);
+    transform-origin: top left;
+    font-size: 0.5rem;
+}
+
+.holding-area .spine-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
