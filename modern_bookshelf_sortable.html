@@ -1316,15 +1316,8 @@
         function clearAllShelves() {
             if (confirm('Are you sure you want to clear all books from all shelves?')) {
                 document.querySelectorAll('.bookshelf-row').forEach(shelf => {
-                    // Remove all children except the shelf height label
-                    const label = shelf.querySelector('.shelf-height-label');
-                    while (shelf.firstChild) {
-                        shelf.removeChild(shelf.firstChild);
-                    }
-                    // Re-add the label
-                    if (label) {
-                        shelf.appendChild(label);
-                    }
+                    // Remove only book elements, keep the label
+                    shelf.querySelectorAll('.book').forEach(book => book.remove());
                 });
                 localStorage.removeItem('bookshelfOrder');
             }
@@ -1573,10 +1566,14 @@
                            min="6"
                            max="24"
                            step="0.5">
-                    <button class="save-btn" onclick="saveShelfHeight('${shelfId}')">Save</button>
-                    <button class="cancel-btn" onclick="cancelShelfHeightEdit('${shelfId}')">Cancel</button>
+                    <button class="save-btn" data-shelf-id="${shelfId}">Save</button>
+                    <button class="cancel-btn" data-shelf-id="${shelfId}">Cancel</button>
                 </div>
             `;
+
+            // Add event listeners to buttons
+            label.querySelector('.save-btn').addEventListener('click', () => saveShelfHeight(shelfId));
+            label.querySelector('.cancel-btn').addEventListener('click', () => cancelShelfHeightEdit(shelfId));
 
             // Focus the input
             const input = document.getElementById(`height-input-${shelfId}`);
@@ -1585,13 +1582,19 @@
                 input.select();
 
                 // Save on Enter key
-                input.addEventListener('keydown', (e) => {
+                const handleKeydown = (e) => {
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         saveShelfHeight(shelfId);
                     } else if (e.key === 'Escape') {
+                        e.preventDefault();
                         cancelShelfHeightEdit(shelfId);
                     }
-                });
+                };
+
+                // Store reference for cleanup
+                input._keydownHandler = handleKeydown;
+                input.addEventListener('keydown', handleKeydown);
             }
         }
 
@@ -1602,13 +1605,19 @@
             const input = document.getElementById(`height-input-${shelfId}`);
             if (!input) return;
 
-            const newHeight = parseFloat(input.value);
-            if (newHeight >= 6 && newHeight <= 24) {
-                updateShelfHeight(shelfId, newHeight);
-            } else {
-                alert('Shelf height must be between 6 and 24 inches.');
-                cancelShelfHeightEdit(shelfId);
+            // Clean up event listener
+            if (input._keydownHandler) {
+                input.removeEventListener('keydown', input._keydownHandler);
+                delete input._keydownHandler;
             }
+
+            const newHeight = parseFloat(input.value);
+            if (isNaN(newHeight) || newHeight < 6 || newHeight > 24) {
+                alert('Shelf height must be a number between 6 and 24 inches.');
+                cancelShelfHeightEdit(shelfId);
+                return;
+            }
+            updateShelfHeight(shelfId, newHeight);
         }
 
         /**
@@ -1617,6 +1626,13 @@
         function cancelShelfHeightEdit(shelfId) {
             const shelf = document.getElementById(shelfId);
             if (shelf) {
+                // Clean up event listener if it exists
+                const input = document.getElementById(`height-input-${shelfId}`);
+                if (input && input._keydownHandler) {
+                    input.removeEventListener('keydown', input._keydownHandler);
+                    delete input._keydownHandler;
+                }
+
                 addShelfHeightLabel(shelf);
             }
         }
