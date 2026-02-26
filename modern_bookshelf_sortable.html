@@ -763,7 +763,8 @@
             document.getElementById('settings-header').addEventListener('click', toggleSettings);
             document.getElementById('dpi-input').addEventListener('change', handleDPIChange);
             document.getElementById('default-shelf-height').addEventListener('change', handleDefaultHeightChange);
-            document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
+            // TODO: Uncomment when openCalibrationModal is implemented (Task 8)
+            // document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
             document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
 
             // Initialize temporary holding sortable
@@ -1223,6 +1224,14 @@
 
             sortableInstances.push(sortable);
             console.log('Temporary holding initialized');
+        }
+
+        /**
+         * Placeholder for calibration modal (Task 8)
+         * TODO: Implement full calibration functionality
+         */
+        function openCalibrationModal() {
+            alert('Calibration feature coming soon! (Task 8)');
         }
 
         /**
