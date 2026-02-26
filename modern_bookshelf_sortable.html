@@ -444,6 +444,31 @@
     </footer>
 
     <script>
+        // Dark Mode Theme Management
+        (function initializeTheme() {
+            // Check localStorage for saved preference, default to dark mode
+            const savedTheme = localStorage.getItem('bookshelf-theme-preference') || 'dark';
+
+            // Apply theme immediately to prevent flash
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+
+            // Update icon to match current theme
+            updateThemeIcon();
+        })();
+
+        function updateThemeIcon() {
+            const themeIcon = document.getElementById('theme-icon');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+
+            if (themeIcon) {
+                // Show sun in dark mode (clicking will go to light)
+                // Show moon in light mode (clicking will go to dark)
+                themeIcon.textContent = isDarkMode ? '☀️' : '🌙';
+            }
+        }
+
         // Book colors for sample books
         const bookColors = [
             '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c',
