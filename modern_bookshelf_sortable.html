@@ -59,11 +59,12 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            background-color: var(--bg-primary);
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         header {
