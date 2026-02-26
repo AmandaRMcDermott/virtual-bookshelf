@@ -152,7 +152,9 @@
             height: 15px;
             background-color: var(--bg-shelf-base);
             box-shadow: 0px -15px 25px 0px var(--bg-shelf-shadow),
-                        inset 0px 42px 20px -35px var(--bg-shelf-shadow);
+                /* box-shadow: 0px -15px 25px 0px var(--bg-shelf-shadow), */
+                inset 0px 42px 20px -25px var(--bg-shelf-shadow);
+            /* inset 0px 42px 20px -35px var(--bg-shelf-shadow); */
             border-radius: 0 0 5px 5px;
             z-index: 0;
         }
@@ -335,8 +337,8 @@
         /* Info banner */
         .info-banner {
             background: linear-gradient(135deg,
-                        var(--info-gradient-start) 0%,
-                        var(--info-gradient-end) 100%);
+                    var(--info-gradient-start) 0%,
+                    var(--info-gradient-end) 100%);
             color: white;
             padding: 15px;
             border-radius: 5px;
@@ -413,13 +415,13 @@
 
     <main>
         <div class="bookshelf-container">
-            <div class="info-banner">
+            <!-- <div class="info-banner">
                 <h3>✨ Ultra-Smooth Drag & Drop</h3>
                 <p>• Drag books to reorder them on any shelf</p>
                 <p>• Watch books smoothly glide apart to preview where your book will land</p>
                 <p>• Move books between shelves with buttery-smooth fluid animations</p>
                 <p>• Experience seamless transitions as books elegantly make space</p>
-            </div>
+            </div> -->
 
             <div class="controls-panel">
                 <h3>Upload Book Spine Images</h3>

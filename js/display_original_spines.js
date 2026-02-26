@@ -111,12 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set up individual book controls
     setupIndividualBookControls();
 
-    // Set up resize mode buttons
-    setupResizeModeButtons();
-
-    // Set up direct resize functionality
-    setupDirectResize();
-
     // Set up export button functionality
     const exportBtn = document.getElementById('export-btn');
     if (exportBtn) {
@@ -1783,24 +1777,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Add resize handles to a book
+     * Add resize handles to a book - functionality removed
      */
     function addResizeHandles(book) {
-        const rightHandle = document.createElement('div');
-        rightHandle.className = 'resize-handle right';
-        rightHandle.dataset.resizeType = 'width';
-
-        const bottomHandle = document.createElement('div');
-        bottomHandle.className = 'resize-handle bottom';
-        bottomHandle.dataset.resizeType = 'height';
-
-        const cornerHandle = document.createElement('div');
-        cornerHandle.className = 'resize-handle corner';
-        cornerHandle.dataset.resizeType = 'scale';
-
-        book.appendChild(rightHandle);
-        book.appendChild(bottomHandle);
-        book.appendChild(cornerHandle);
+        // Resize functionality has been removed
     }
 
     /**
