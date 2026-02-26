@@ -712,6 +712,11 @@
         let bookCounter = 1;
         let sortableInstances = [];
 
+        // Physical sizing state
+        let currentDPI = 96;
+        let defaultShelfHeight = 12;
+        let booksMetadata = {};
+
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize sortable for existing shelves
             initializeSortable();
@@ -734,6 +739,19 @@
 
             // Set up theme toggle button
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+            // Load and apply settings
+            loadSettings();
+
+            // Set up settings event listeners
+            document.getElementById('settings-header').addEventListener('click', toggleSettings);
+            document.getElementById('dpi-input').addEventListener('change', handleDPIChange);
+            document.getElementById('default-shelf-height').addEventListener('change', handleDefaultHeightChange);
+            document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
+            document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
+
+            // Initialize temporary holding sortable
+            initializeTemporaryHolding();
         });
 
         /**
@@ -1017,6 +1035,36 @@
             }, 10);
 
             saveBookshelfOrder();
+        }
+
+        /**
+         * Load settings from localStorage
+         */
+        function loadSettings() {
+            const savedDPI = localStorage.getItem('bookshelf-dpi');
+            const savedHeight = localStorage.getItem('bookshelf-default-shelf-height');
+            const savedMetadata = localStorage.getItem('bookshelf-books-metadata');
+
+            if (savedDPI) {
+                currentDPI = parseInt(savedDPI);
+                document.getElementById('dpi-input').value = currentDPI;
+            }
+
+            if (savedHeight) {
+                defaultShelfHeight = parseFloat(savedHeight);
+                document.getElementById('default-shelf-height').value = defaultShelfHeight;
+            }
+
+            if (savedMetadata) {
+                try {
+                    booksMetadata = JSON.parse(savedMetadata);
+                } catch (e) {
+                    console.error('Failed to parse books metadata:', e);
+                    booksMetadata = {};
+                }
+            }
+
+            console.log('Settings loaded:', { currentDPI, defaultShelfHeight });
         }
 
         /**
