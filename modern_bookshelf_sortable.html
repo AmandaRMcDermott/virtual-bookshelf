@@ -131,24 +131,12 @@
             white-space: nowrap;
             overflow-x: auto;
             display: flex;
-            /* /* flex-direction: row; */
             flex-wrap: nowrap;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             padding: 8px 2px;
-            /* Rounds edges of each shelf */
-            /* border-radius: 5px; */
-            /* Separates shelves with white space */
-            /* margin-bottom: 20px; */
-            /* Inside bookshelf color */
-            background: #6f3a1f;
-            /* background: */
-            /* linear-gradient(360deg, rgba(111, 58, 31, 1), rgba(245, 222, 179, 0.1)); */
-            /* linear-gradient(0deg, rgba(111, 58, 31, 0.99), transparent 99%), */
-            /* linear-gradient(0deg, rgba(111, 58, 31, 0.9), transparent 0%), */
-            /* linear-gradient(180deg, rgba(245, 222, 179, 0.1), transparent 0%); */
-            /* background-color: #6f3a1f; */
-            border: 8px solid #4a2511;
+            background: var(--bg-shelf);
+            border: 8px solid var(--border-shelf);
             transition: background-color 0.3s ease;
             position: relative;
             align-items: flex-end;
@@ -162,14 +150,9 @@
             left: 0;
             right: 0;
             height: 15px;
-            /* Bookshelf color, where books sit */
-            /* background-color: #6b371c; */
-            background-color: #844213ff;
-            /* Shadow inside bookshelf behind the books */
-            /* box-shadow: 0px -15px 25px 0px #4d1e06ff; */
-            /* Shadow on the shelf where the books sit */
-            /* box-shadow: inset 0px 42px 20px -35px #4d1e06ff; */
-            box-shadow: 0px -15px 25px 0px #4d1e06ff, inset 0px 42px 20px -35px #4d1e06ff;
+            background-color: var(--bg-shelf-base);
+            box-shadow: 0px -15px 25px 0px var(--bg-shelf-shadow),
+                        inset 0px 42px 20px -35px var(--bg-shelf-shadow);
             border-radius: 0 0 5px 5px;
             z-index: 0;
         }
