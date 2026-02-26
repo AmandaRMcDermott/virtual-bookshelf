@@ -10,6 +10,28 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
+        /* Theme Color Variables */
+        :root {
+            /* Light mode colors (default) */
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #fff;
+            --bg-header: #34495e;
+            --bg-panel: #fff;
+            --bg-shelf: #6f3a1f;
+            --bg-shelf-base: #844213ff;
+            --bg-shelf-shadow: #4d1e06ff;
+            --text-primary: #333;
+            --text-light: white;
+            --border-shelf: #4a2511;
+            --border-panel: #ddd;
+            --button-primary: #3498db;
+            --button-hover: #57ce8cff;
+            --shadow-book: rgba(0, 0, 0, 0.3);
+            --shadow-panel: rgba(0, 0, 0, 0.1);
+            --info-gradient-start: #667eea;
+            --info-gradient-end: #764ba2;
+        }
+
         /* Main application styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -83,13 +105,24 @@
             white-space: nowrap;
             overflow-x: auto;
             display: flex;
-            flex-direction: row;
+            /* /* flex-direction: row; */
             flex-wrap: nowrap;
-            padding: 8px 5px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            background-color: #e0c8ad;
-            border: 5px solid #8b4513;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            padding: 8px 2px;
+            /* Rounds edges of each shelf */
+            /* border-radius: 5px; */
+            /* Separates shelves with white space */
+            /* margin-bottom: 20px; */
+            /* Inside bookshelf color */
+            background: #6f3a1f;
+            /* background: */
+            /* linear-gradient(360deg, rgba(111, 58, 31, 1), rgba(245, 222, 179, 0.1)); */
+            /* linear-gradient(0deg, rgba(111, 58, 31, 0.99), transparent 99%), */
+            /* linear-gradient(0deg, rgba(111, 58, 31, 0.9), transparent 0%), */
+            /* linear-gradient(180deg, rgba(245, 222, 179, 0.1), transparent 0%); */
+            /* background-color: #6f3a1f; */
+            border: 8px solid #4a2511;
             transition: background-color 0.3s ease;
             position: relative;
             align-items: flex-end;
@@ -103,7 +136,14 @@
             left: 0;
             right: 0;
             height: 15px;
-            background-color: #8b4513;
+            /* Bookshelf color, where books sit */
+            /* background-color: #6b371c; */
+            background-color: #844213ff;
+            /* Shadow inside bookshelf behind the books */
+            /* box-shadow: 0px -15px 25px 0px #4d1e06ff; */
+            /* Shadow on the shelf where the books sit */
+            /* box-shadow: inset 0px 42px 20px -35px #4d1e06ff; */
+            box-shadow: 0px -15px 25px 0px #4d1e06ff, inset 0px 42px 20px -35px #4d1e06ff;
             border-radius: 0 0 5px 5px;
             z-index: 0;
         }
@@ -121,8 +161,16 @@
 
         /* Visual feedback when dragging over shelf */
         .bookshelf-row.sortable-drag-over {
-            background-color: #f5deb3;
+            /* background: #6f3a1f; */
+            background:
+                linear-gradient(0deg, rgba(111, 58, 31, 1), transparent 70%),
+                /* linear-gradient(0deg, rgba(111, 58, 31, 0.9), transparent 0%), */
+                linear-gradient(180deg, rgba(245, 222, 179, 0.3), transparent 100%);
+            /* background: linear-gradient(180deg, rgba(111, 58, 31, 0.8), rgba(245, 222, 179, 0.3)); */
+            /* background: linear-gradient(0deg, rgba(111, 58, 31, 1), rgba(245, 222, 179, 0.3)); */
+            /* color: rgba(245, 222, 179, 1); */
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+            /* opacity: ; */
         }
 
         .book {
@@ -141,7 +189,7 @@
         /* Smooth animation for books moving during drag */
         .book:not(.sortable-chosen):not(.sortable-drag) {
             transition: transform 250ms cubic-bezier(0.2, 0, 0, 1),
-                        box-shadow 200ms ease;
+                box-shadow 200ms ease;
         }
 
         .book:active {
@@ -154,12 +202,14 @@
             transform: scale(1.05);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             /* box-shadow: inset 0 0 1px rgba(0,0,0,0.4), 0 0 0 1px rgba(63, 63, 68, 0.05), 0 1px 3px 0 rgba(34, 33, 81, 0.15); */
-            transition: none !important; /* Disable transition for dragged item for immediate response */
+            transition: none !important;
+            /* Disable transition for dragged item for immediate response */
         }
 
         /* Item actively being dragged */
         .sortable-drag {
-            transition: none !important; /* No transition for the dragged item itself */
+            transition: none !important;
+            /* No transition for the dragged item itself */
         }
 
         /* Book spine styles */
@@ -267,8 +317,8 @@
         /* Add a subtle scale to books adjacent to the drag position */
         .bookshelf-row:has(.sortable-chosen) .book:not(.sortable-chosen) {
             transition: transform 250ms cubic-bezier(0.2, 0, 0, 1),
-                        box-shadow 200ms ease,
-                        opacity 200ms ease;
+                box-shadow 200ms ease,
+                opacity 200ms ease;
         }
 
         /* Info banner */
