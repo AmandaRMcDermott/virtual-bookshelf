@@ -985,11 +985,27 @@
             const img = new Image();
 
             img.onload = function () {
+                const pixelWidth = img.width;
+                const pixelHeight = img.height;
+
+                // Calculate physical dimensions in inches
+                const physicalWidth = pixelWidth / currentDPI;
+                const physicalHeight = pixelHeight / currentDPI;
+
+                // Calculate display dimensions at current DPI
+                const displayWidth = physicalWidth * currentDPI;
+                const displayHeight = physicalHeight * currentDPI;
+
                 createBookWithSpineImage({
                     fileName: file.name,
                     url: imageUrl,
-                    width: Math.max(30, Math.floor(img.width * 0.2)),
-                    height: Math.max(120, Math.floor(img.height * 0.2))
+                    pixelWidth,
+                    pixelHeight,
+                    physicalWidth,
+                    physicalHeight,
+                    displayWidth,
+                    displayHeight,
+                    hasManualOverride: false
                 });
             };
             img.src = imageUrl;
@@ -1004,14 +1020,28 @@
 
             const bookId = `book-${bookCounter++}-${spineData.fileName.replace(/[^a-z0-9]/gi, '-')}`;
 
+            // Store metadata
+            booksMetadata[bookId] = {
+                fileName: spineData.fileName,
+                imageUrl: spineData.url,
+                pixelWidth: spineData.pixelWidth,
+                pixelHeight: spineData.pixelHeight,
+                physicalWidth: spineData.physicalWidth,
+                physicalHeight: spineData.physicalHeight,
+                hasManualOverride: spineData.hasManualOverride || false
+            };
+
+            saveMetadata();
+
             const book = document.createElement('div');
             book.className = 'book';
             book.id = bookId;
+            book.setAttribute('data-physical-height', spineData.physicalHeight.toFixed(2));
 
             const spine = document.createElement('div');
             spine.className = 'book-spine';
-            spine.style.width = `${spineData.width}px`;
-            spine.style.height = `${spineData.height}px`;
+            spine.style.width = `${spineData.displayWidth}px`;
+            spine.style.height = `${spineData.displayHeight}px`;
 
             const spineImg = document.createElement('img');
             spineImg.src = spineData.url;
@@ -1035,6 +1065,13 @@
             }, 10);
 
             saveBookshelfOrder();
+        }
+
+        /**
+         * Save books metadata to localStorage
+         */
+        function saveMetadata() {
+            localStorage.setItem('bookshelf-books-metadata', JSON.stringify(booksMetadata));
         }
 
         /**
