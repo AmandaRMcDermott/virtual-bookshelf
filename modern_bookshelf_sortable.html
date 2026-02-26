@@ -469,6 +469,31 @@
             }
         }
 
+        function toggleTheme() {
+            const body = document.body;
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            // Toggle the dark-mode class
+            if (isDarkMode) {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('bookshelf-theme-preference', 'light');
+            } else {
+                body.classList.add('dark-mode');
+                localStorage.setItem('bookshelf-theme-preference', 'dark');
+            }
+
+            // Update icon with animation
+            const themeIcon = document.getElementById('theme-icon');
+            themeIcon.style.opacity = '0';
+            themeIcon.style.transform = 'rotate(180deg)';
+
+            setTimeout(() => {
+                updateThemeIcon();
+                themeIcon.style.opacity = '1';
+                themeIcon.style.transform = 'rotate(0deg)';
+            }, 150);
+        }
+
         // Book colors for sample books
         const bookColors = [
             '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c',
@@ -507,6 +532,9 @@
                 document.getElementById('spine-file-input').click();
             });
             document.getElementById('spine-file-input').addEventListener('change', handleFileSelection);
+
+            // Set up theme toggle button
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
         });
 
         /**
