@@ -931,6 +931,7 @@
         let defaultShelfHeight = 12;
         let booksMetadata = {};
         let displayScale = 20; // Default to 20% of life-size
+        const CALIBRATION_RULER_INCHES = 12;
 
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize sortable for existing shelves
@@ -972,9 +973,21 @@
                 updateRulerWidth(dpi);
             });
 
+            // Calibration modal button event listeners
+            document.getElementById('calibration-save-btn').addEventListener('click', saveCalibration);
+            document.getElementById('calibration-cancel-btn').addEventListener('click', closeCalibrationModal);
+
             // Close calibration modal when clicking outside
             document.getElementById('calibration-modal').addEventListener('click', function(e) {
                 if (e.target.id === 'calibration-modal') {
+                    closeCalibrationModal();
+                }
+            });
+
+            // Keyboard support - close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                const modal = document.getElementById('calibration-modal');
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
                     closeCalibrationModal();
                 }
             });
@@ -1496,7 +1509,7 @@
             const markingsContainer = document.getElementById('ruler-markings');
 
             // Calculate ruler width: 12 inches × DPI
-            const rulerWidth = 12 * dpi;
+            const rulerWidth = CALIBRATION_RULER_INCHES * dpi;
             ruler.style.width = rulerWidth + 'px';
 
             // Update DPI display
@@ -1504,7 +1517,7 @@
 
             // Generate inch markings
             markingsContainer.innerHTML = '';
-            for (let i = 0; i <= 12; i++) {
+            for (let i = 0; i <= CALIBRATION_RULER_INCHES; i++) {
                 const inch = document.createElement('div');
                 inch.className = 'ruler-inch';
 
@@ -1590,9 +1603,9 @@
     </script>
 
     <!-- Calibration Modal -->
-    <div id="calibration-modal" class="calibration-modal">
+    <div id="calibration-modal" class="calibration-modal" role="dialog" aria-modal="true" aria-labelledby="calibration-title">
         <div class="calibration-content">
-            <h2>Screen DPI Calibration</h2>
+            <h2 id="calibration-title">Screen DPI Calibration</h2>
             <div class="calibration-instructions">
                 <p>Hold a physical ruler against your screen. Adjust the slider below until the on-screen ruler matches your physical ruler exactly.</p>
                 <p><strong>Tip:</strong> Most screens are between 96-150 DPI. Retina displays can be 200+ DPI.</p>
@@ -1616,8 +1629,8 @@
             </div>
 
             <div class="calibration-buttons">
-                <button class="calibration-cancel-btn" onclick="closeCalibrationModal()">Cancel</button>
-                <button class="calibration-save-btn" onclick="saveCalibration()">Done</button>
+                <button class="calibration-cancel-btn" id="calibration-cancel-btn">Cancel</button>
+                <button class="calibration-save-btn" id="calibration-save-btn">Done</button>
             </div>
         </div>
     </div>
