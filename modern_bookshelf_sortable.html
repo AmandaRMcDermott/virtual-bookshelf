@@ -233,11 +233,12 @@
             writing-mode: vertical-rl;
             text-orientation: mixed;
             text-align: center;
-            box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 5px 5px 5px var(--shadow-book);
             margin-bottom: 0;
             border-radius: 3px;
             font-size: 0.8rem;
             font-weight: 500;
+            transition: box-shadow 200ms ease;
         }
 
         .spine-image {
@@ -249,11 +250,12 @@
 
         /* Controls panel */
         .controls-panel {
-            background-color: #fff;
-            border: 1px solid #ddd;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
             border-radius: 5px;
             padding: 15px;
             margin-bottom: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .controls-panel h3 {
@@ -332,12 +334,15 @@
 
         /* Info banner */
         .info-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg,
+                        var(--info-gradient-start) 0%,
+                        var(--info-gradient-end) 100%);
             color: white;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px var(--shadow-panel);
+            transition: background 0.3s ease;
         }
 
         .info-banner h3 {
