@@ -261,33 +261,32 @@
             font-size: 0.8rem;
         }
 
-        /* Books in temporary holding - proportional scaling */
         .holding-area {
-            padding: 10px;
+            /* Padding from the top of the temp holding area */
+            padding: 15px;
             flex: 1;
             overflow-y: auto;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            /* Gap between books */
+            gap: 10px;
             align-content: start;
         }
 
+        /* Books in temporary holding - smaller display */
         .holding-area .book {
             margin: 0;
-            flex-shrink: 0;
         }
 
         .holding-area .book-spine {
-            /* Scale down to 25% while maintaining aspect ratio */
-            transform: scale(0.25);
-            transform-origin: top left;
-            font-size: 0.5rem;
+            width: 60px !important;
+            height: 80px !important;
+            font-size: 0.6rem;
         }
 
         .holding-area .spine-image {
             width: 100%;
             height: 100%;
-            object-fit: contain;
         }
 
         /* Responsive design */
@@ -304,7 +303,9 @@
         .bookshelf {
             width: 100%;
             box-sizing: border-box;
-            background-color: #d4a574;
+            /* Outer rim of the bookshelf */
+            background-color: #4a2511;
+            /* background-color: #d4a574; */
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -312,7 +313,8 @@
 
         body.dark-mode .bookshelf {
             /* Outer rim of the bookshelf */
-            background-color: #8b6f47;
+            background-color: #3a1f11;
+            /* background-color: #8b6f47; */
         }
 
         .bookshelf-row {
@@ -322,9 +324,14 @@
             display: flex;
             flex-wrap: nowrap;
             flex-direction: row !important;
+            /* justify-content: center; */
+            /* Centers horizontally */
+            /* align-items: center; */
+            /* Centers vertically */
             padding: 8px 2px;
             background: var(--bg-shelf);
             border: 8px solid var(--border-shelf);
+            /* border: 8px solid var(--border-shelf); */
             transition: background-color 0.3s ease;
             position: relative;
             align-items: flex-end;
@@ -342,9 +349,11 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 15px;
+            /* Height of bookshelf that books sit on */
+            /* height: 15px; */
+            height: 20px;
             background-color: var(--bg-shelf-base);
-            box-shadow: 0px -15px 25px 0px var(--bg-shelf-shadow),
+            box-shadow: 0px -20px 25px 0px var(--bg-shelf-shadow),
                 /* box-shadow: 0px -15px 25px 0px var(--bg-shelf-shadow), */
                 inset 0px 42px 20px -25px var(--bg-shelf-shadow);
             /* inset 0px 42px 20px -35px var(--bg-shelf-shadow); */
@@ -588,6 +597,171 @@
         #theme-toggle:active #theme-icon {
             transform: rotate(20deg);
         }
+
+        /* Calibration Modal Styles */
+        .calibration-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calibration-modal.active {
+            display: flex;
+        }
+
+        .calibration-content {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .calibration-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .calibration-instructions {
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .calibration-ruler-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-panel);
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .calibration-ruler {
+            height: 60px;
+            background: linear-gradient(to right, #f0f0f0 0%, #ffffff 100%);
+            border: 2px solid #333;
+            border-radius: 3px;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .calibration-ruler {
+            background: linear-gradient(to right, #3a3a3a 0%, #4a4a4a 100%);
+            border-color: #666;
+        }
+
+        .ruler-markings {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ruler-inch {
+            position: relative;
+            flex: 1;
+            border-left: 2px solid #333;
+            height: 100%;
+        }
+
+        body.dark-mode .ruler-inch {
+            border-color: #ccc;
+        }
+
+        .ruler-inch:last-child {
+            border-right: 2px solid #333;
+        }
+
+        body.dark-mode .ruler-inch:last-child {
+            border-right-color: #ccc;
+        }
+
+        .ruler-inch-label {
+            position: absolute;
+            bottom: 5px;
+            left: -8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        body.dark-mode .ruler-inch-label {
+            color: #ccc;
+        }
+
+        .calibration-controls {
+            margin: 25px 0;
+        }
+
+        .calibration-controls label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .calibration-slider {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .calibration-dpi-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--button-primary);
+            margin: 10px 0;
+        }
+
+        .calibration-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .calibration-buttons button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .calibration-save-btn {
+            background: var(--button-primary);
+            color: white;
+        }
+
+        .calibration-save-btn:hover {
+            background: var(--button-hover);
+        }
+
+        .calibration-cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .calibration-cancel-btn:hover {
+            background: #7f8c8d;
+        }
     </style>
 </head>
 
@@ -756,7 +930,7 @@
         let currentDPI = 96;
         let defaultShelfHeight = 12;
         let booksMetadata = {};
-        let displayScale = 50; // Default to 50% of life-size
+        let displayScale = 20; // Default to 20% of life-size
 
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize sortable for existing shelves
@@ -789,9 +963,21 @@
             document.getElementById('dpi-input').addEventListener('change', handleDPIChange);
             document.getElementById('default-shelf-height').addEventListener('change', handleDefaultHeightChange);
             document.getElementById('scale-slider').addEventListener('input', handleScaleChange);
-            // TODO: Uncomment when openCalibrationModal is implemented (Task 8)
-            // document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
+            document.getElementById('calibrate-btn').addEventListener('click', openCalibrationModal);
             document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
+
+            // Calibration slider event listener
+            document.getElementById('calibration-slider').addEventListener('input', function(e) {
+                const dpi = parseInt(e.target.value);
+                updateRulerWidth(dpi);
+            });
+
+            // Close calibration modal when clicking outside
+            document.getElementById('calibration-modal').addEventListener('click', function(e) {
+                if (e.target.id === 'calibration-modal') {
+                    closeCalibrationModal();
+                }
+            });
 
             // Initialize temporary holding sortable
             initializeTemporaryHolding();
@@ -1230,7 +1416,7 @@
             if (confirm('Reset all settings to defaults?')) {
                 currentDPI = 96;
                 defaultShelfHeight = 12;
-                displayScale = 50;
+                displayScale = 20;
                 document.getElementById('dpi-input').value = currentDPI;
                 document.getElementById('default-shelf-height').value = defaultShelfHeight;
                 document.getElementById('scale-slider').value = displayScale;
@@ -1276,11 +1462,84 @@
         }
 
         /**
-         * Placeholder for calibration modal (Task 8)
-         * TODO: Implement full calibration functionality
+         * Open the DPI calibration modal
          */
         function openCalibrationModal() {
-            alert('Calibration feature coming soon! (Task 8)');
+            const modal = document.getElementById('calibration-modal');
+            const slider = document.getElementById('calibration-slider');
+
+            // Set slider to current DPI
+            slider.value = currentDPI;
+
+            // Initialize ruler and display
+            updateRulerWidth(currentDPI);
+
+            // Show modal
+            modal.classList.add('active');
+        }
+
+        /**
+         * Close the calibration modal without saving
+         */
+        function closeCalibrationModal() {
+            const modal = document.getElementById('calibration-modal');
+            modal.classList.remove('active');
+        }
+
+        /**
+         * Update the ruler width based on DPI
+         * Formula: 12 inches × DPI = width in pixels
+         */
+        function updateRulerWidth(dpi) {
+            const ruler = document.getElementById('calibration-ruler');
+            const dpiDisplay = document.getElementById('calibration-dpi-value');
+            const markingsContainer = document.getElementById('ruler-markings');
+
+            // Calculate ruler width: 12 inches × DPI
+            const rulerWidth = 12 * dpi;
+            ruler.style.width = rulerWidth + 'px';
+
+            // Update DPI display
+            dpiDisplay.textContent = dpi;
+
+            // Generate inch markings
+            markingsContainer.innerHTML = '';
+            for (let i = 0; i <= 12; i++) {
+                const inch = document.createElement('div');
+                inch.className = 'ruler-inch';
+
+                const label = document.createElement('span');
+                label.className = 'ruler-inch-label';
+                label.textContent = i + '"';
+                inch.appendChild(label);
+
+                markingsContainer.appendChild(inch);
+            }
+        }
+
+        /**
+         * Save the calibrated DPI value
+         */
+        function saveCalibration() {
+            const slider = document.getElementById('calibration-slider');
+            const newDPI = parseInt(slider.value);
+
+            // Update current DPI
+            currentDPI = newDPI;
+
+            // Update DPI input field
+            document.getElementById('dpi-input').value = newDPI;
+
+            // Save to localStorage (using same key as handleDPIChange)
+            localStorage.setItem('bookshelf-dpi', newDPI.toString());
+
+            // Recalculate all book dimensions
+            recalculateAllBookSizes();
+
+            // Close modal
+            closeCalibrationModal();
+
+            console.log('DPI calibrated to:', newDPI);
         }
 
         /**
@@ -1329,6 +1588,39 @@
             }
         }
     </script>
+
+    <!-- Calibration Modal -->
+    <div id="calibration-modal" class="calibration-modal">
+        <div class="calibration-content">
+            <h2>Screen DPI Calibration</h2>
+            <div class="calibration-instructions">
+                <p>Hold a physical ruler against your screen. Adjust the slider below until the on-screen ruler matches your physical ruler exactly.</p>
+                <p><strong>Tip:</strong> Most screens are between 96-150 DPI. Retina displays can be 200+ DPI.</p>
+            </div>
+
+            <div class="calibration-ruler-container">
+                <div id="calibration-ruler" class="calibration-ruler">
+                    <div class="ruler-markings" id="ruler-markings">
+                        <!-- Inch markings will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="calibration-controls">
+                <label for="calibration-slider">Adjust DPI:</label>
+                <input type="range" id="calibration-slider" class="calibration-slider"
+                       min="50" max="300" value="96" step="1">
+                <div class="calibration-dpi-display">
+                    <span id="calibration-dpi-value">96</span> DPI
+                </div>
+            </div>
+
+            <div class="calibration-buttons">
+                <button class="calibration-cancel-btn" onclick="closeCalibrationModal()">Cancel</button>
+                <button class="calibration-save-btn" onclick="saveCalibration()">Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
