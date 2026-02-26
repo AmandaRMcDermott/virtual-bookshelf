@@ -1068,6 +1068,78 @@
         }
 
         /**
+         * Toggle settings panel collapse/expand
+         */
+        function toggleSettings() {
+            const header = document.getElementById('settings-header');
+            const content = document.getElementById('settings-content');
+
+            header.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        }
+
+        /**
+         * Handle DPI input change
+         */
+        function handleDPIChange(event) {
+            const newDPI = parseInt(event.target.value);
+            if (newDPI >= 50 && newDPI <= 300) {
+                currentDPI = newDPI;
+                localStorage.setItem('bookshelf-dpi', currentDPI);
+                recalculateAllBookSizes();
+                console.log('DPI updated to:', currentDPI);
+            }
+        }
+
+        /**
+         * Handle default shelf height change
+         */
+        function handleDefaultHeightChange(event) {
+            const newHeight = parseFloat(event.target.value);
+            if (newHeight >= 6 && newHeight <= 24) {
+                defaultShelfHeight = newHeight;
+                localStorage.setItem('bookshelf-default-shelf-height', defaultShelfHeight);
+                console.log('Default shelf height updated to:', defaultShelfHeight);
+            }
+        }
+
+        /**
+         * Recalculate all book sizes based on current DPI
+         */
+        function recalculateAllBookSizes() {
+            document.querySelectorAll('.book').forEach(book => {
+                const bookId = book.id;
+                const metadata = booksMetadata[bookId];
+
+                if (metadata && metadata.physicalWidth && metadata.physicalHeight) {
+                    const displayWidth = metadata.physicalWidth * currentDPI;
+                    const displayHeight = metadata.physicalHeight * currentDPI;
+
+                    const spine = book.querySelector('.book-spine');
+                    if (spine) {
+                        spine.style.width = `${displayWidth}px`;
+                        spine.style.height = `${displayHeight}px`;
+                    }
+                }
+            });
+        }
+
+        /**
+         * Reset settings to defaults
+         */
+        function resetSettings() {
+            if (confirm('Reset all settings to defaults?')) {
+                currentDPI = 96;
+                defaultShelfHeight = 12;
+                document.getElementById('dpi-input').value = currentDPI;
+                document.getElementById('default-shelf-height').value = defaultShelfHeight;
+                localStorage.setItem('bookshelf-dpi', currentDPI);
+                localStorage.setItem('bookshelf-default-shelf-height', defaultShelfHeight);
+                recalculateAllBookSizes();
+            }
+        }
+
+        /**
          * Save the bookshelf order to localStorage
          */
         function saveBookshelfOrder() {
