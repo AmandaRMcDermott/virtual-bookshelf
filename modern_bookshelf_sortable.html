@@ -536,6 +536,107 @@
                 opacity 200ms ease;
         }
 
+        /* Shelf height label */
+        .shelf-height-label {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: var(--button-primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .shelf-height-label:hover {
+            background: var(--button-hover);
+        }
+
+        .shelf-number {
+            font-weight: bold;
+        }
+
+        /* Shelf height editor */
+        .shelf-height-editor {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .shelf-height-editor input {
+            width: 60px;
+            padding: 4px 6px;
+            border: 1px solid var(--border-panel);
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .shelf-height-editor button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .shelf-height-editor .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .shelf-height-editor .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* Oversized book warning */
+        .oversized-book {
+            outline: 3px solid #ff6b6b;
+            outline-offset: 2px;
+            position: relative;
+        }
+
+        .oversized-book::after {
+            content: '⚠️';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 6px;
+            font-size: 0.9em;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .oversized-book .book-spine::before {
+            content: attr(data-warning-text);
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+
+        .oversized-book:hover .book-spine::before {
+            opacity: 1;
+        }
+
         /* Info banner */
         .info-banner {
             background: linear-gradient(135deg,
@@ -932,6 +1033,7 @@
         let booksMetadata = {};
         let displayScale = 20; // Default to 20% of life-size
         const CALIBRATION_RULER_INCHES = 12;
+        let shelfHeights = {}; // Stores height in inches for each shelf
 
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize sortable for existing shelves
@@ -994,6 +1096,9 @@
 
             // Initialize temporary holding sortable
             initializeTemporaryHolding();
+
+            // Initialize shelf heights
+            initializeShelfHeights();
         });
 
         /**
@@ -1048,6 +1153,14 @@
 
                         // Save the new order
                         saveBookshelfOrder();
+
+                        // Check for oversized books on both source and destination shelves
+                        if (evt.from && evt.from.classList.contains('bookshelf-row')) {
+                            checkOversizedBooks(evt.from);
+                        }
+                        if (evt.to && evt.to.classList.contains('bookshelf-row') && evt.to !== evt.from) {
+                            checkOversizedBooks(evt.to);
+                        }
 
                         // Log the move for debugging
                         console.log(`Moved book from shelf ${evt.from.id} to ${evt.to.id}, position ${evt.newIndex}`);
@@ -1130,6 +1243,16 @@
 
             bookshelf.appendChild(newShelf);
 
+            // Initialize shelf height with default value
+            shelfHeights[newShelf.id] = defaultShelfHeight;
+            localStorage.setItem('bookshelf-shelf-heights', JSON.stringify(shelfHeights));
+
+            // Add shelf height label
+            addShelfHeightLabel(newShelf);
+
+            // Apply shelf height
+            applyShelfHeight(newShelf, defaultShelfHeight);
+
             // Initialize sortable on the new shelf
             const sortable = Sortable.create(newShelf, {
                 group: 'books',
@@ -1163,6 +1286,11 @@
                         s.classList.remove('sortable-drag-over');
                     });
                     saveBookshelfOrder();
+
+                    // Check for oversized books on destination shelf
+                    if (evt.to && evt.to.classList.contains('bookshelf-row')) {
+                        checkOversizedBooks(evt.to);
+                    }
                 }
             });
 
@@ -1188,8 +1316,14 @@
         function clearAllShelves() {
             if (confirm('Are you sure you want to clear all books from all shelves?')) {
                 document.querySelectorAll('.bookshelf-row').forEach(shelf => {
+                    // Remove all children except the shelf height label
+                    const label = shelf.querySelector('.shelf-height-label');
                     while (shelf.firstChild) {
                         shelf.removeChild(shelf.firstChild);
+                    }
+                    // Re-add the label
+                    if (label) {
+                        shelf.appendChild(label);
                     }
                 });
                 localStorage.removeItem('bookshelfOrder');
@@ -1307,6 +1441,9 @@
             }, 10);
 
             saveBookshelfOrder();
+
+            // Check for oversized books on this shelf
+            checkOversizedBooks(shelf);
         }
 
         /**
@@ -1351,6 +1488,217 @@
             }
 
             console.log('Settings loaded:', { currentDPI, defaultShelfHeight });
+        }
+
+        /**
+         * Initialize shelf heights for all shelves
+         */
+        function initializeShelfHeights() {
+            // Load saved shelf heights from localStorage
+            const savedHeights = localStorage.getItem('bookshelf-shelf-heights');
+            if (savedHeights) {
+                try {
+                    shelfHeights = JSON.parse(savedHeights);
+                } catch (e) {
+                    console.error('Failed to parse saved shelf heights:', e);
+                    shelfHeights = {};
+                }
+            }
+
+            // Initialize all existing shelves
+            const shelves = document.querySelectorAll('.bookshelf-row');
+            shelves.forEach(shelf => {
+                const shelfId = shelf.id;
+
+                // Set default height if not already set
+                if (!shelfHeights[shelfId]) {
+                    shelfHeights[shelfId] = defaultShelfHeight;
+                }
+
+                // Add shelf height label to the shelf
+                addShelfHeightLabel(shelf);
+
+                // Apply the shelf height
+                applyShelfHeight(shelf, shelfHeights[shelfId]);
+
+                // Check for oversized books
+                checkOversizedBooks(shelf);
+            });
+
+            console.log('Shelf heights initialized:', shelfHeights);
+        }
+
+        /**
+         * Add shelf height label to a shelf
+         */
+        function addShelfHeightLabel(shelfElement) {
+            const shelfId = shelfElement.id;
+            const shelfNumber = shelfId.replace('shelf-', '');
+            const height = shelfHeights[shelfId] || defaultShelfHeight;
+
+            // Check if label already exists
+            let label = shelfElement.querySelector('.shelf-height-label');
+            if (!label) {
+                label = document.createElement('div');
+                label.className = 'shelf-height-label';
+                shelfElement.appendChild(label);
+            }
+
+            label.innerHTML = `
+                <span class="shelf-number">Shelf ${shelfNumber}</span> -
+                <span class="shelf-height-value">${height}″</span>
+            `;
+
+            label.onclick = () => showShelfHeightEditor(shelfId);
+        }
+
+        /**
+         * Show inline editor for shelf height
+         */
+        function showShelfHeightEditor(shelfId) {
+            const shelf = document.getElementById(shelfId);
+            if (!shelf) return;
+
+            const label = shelf.querySelector('.shelf-height-label');
+            if (!label) return;
+
+            const currentHeight = shelfHeights[shelfId] || defaultShelfHeight;
+
+            // Replace label with editor
+            label.innerHTML = `
+                <div class="shelf-height-editor">
+                    <input type="number"
+                           id="height-input-${shelfId}"
+                           value="${currentHeight}"
+                           min="6"
+                           max="24"
+                           step="0.5">
+                    <button class="save-btn" onclick="saveShelfHeight('${shelfId}')">Save</button>
+                    <button class="cancel-btn" onclick="cancelShelfHeightEdit('${shelfId}')">Cancel</button>
+                </div>
+            `;
+
+            // Focus the input
+            const input = document.getElementById(`height-input-${shelfId}`);
+            if (input) {
+                input.focus();
+                input.select();
+
+                // Save on Enter key
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        saveShelfHeight(shelfId);
+                    } else if (e.key === 'Escape') {
+                        cancelShelfHeightEdit(shelfId);
+                    }
+                });
+            }
+        }
+
+        /**
+         * Save shelf height from editor
+         */
+        function saveShelfHeight(shelfId) {
+            const input = document.getElementById(`height-input-${shelfId}`);
+            if (!input) return;
+
+            const newHeight = parseFloat(input.value);
+            if (newHeight >= 6 && newHeight <= 24) {
+                updateShelfHeight(shelfId, newHeight);
+            } else {
+                alert('Shelf height must be between 6 and 24 inches.');
+                cancelShelfHeightEdit(shelfId);
+            }
+        }
+
+        /**
+         * Cancel shelf height editing
+         */
+        function cancelShelfHeightEdit(shelfId) {
+            const shelf = document.getElementById(shelfId);
+            if (shelf) {
+                addShelfHeightLabel(shelf);
+            }
+        }
+
+        /**
+         * Update a specific shelf's height
+         */
+        function updateShelfHeight(shelfId, heightInches) {
+            shelfHeights[shelfId] = heightInches;
+
+            // Save to localStorage
+            localStorage.setItem('bookshelf-shelf-heights', JSON.stringify(shelfHeights));
+
+            const shelf = document.getElementById(shelfId);
+            if (shelf) {
+                // Update label
+                addShelfHeightLabel(shelf);
+
+                // Apply new height
+                applyShelfHeight(shelf, heightInches);
+
+                // Check for oversized books
+                checkOversizedBooks(shelf);
+            }
+
+            console.log(`Shelf ${shelfId} height updated to ${heightInches}"`);
+        }
+
+        /**
+         * Apply CSS height to a shelf based on physical height
+         */
+        function applyShelfHeight(shelfElement, heightInches) {
+            const heightPixels = (heightInches * currentDPI) * (displayScale / 100);
+            shelfElement.style.height = `${heightPixels}px`;
+            shelfElement.style.minHeight = `${heightPixels}px`;
+        }
+
+        /**
+         * Check and flag oversized books on a shelf
+         */
+        function checkOversizedBooks(shelfElement) {
+            const shelfId = shelfElement.id;
+            const shelfHeight = shelfHeights[shelfId] || defaultShelfHeight;
+
+            const books = shelfElement.querySelectorAll('.book');
+            books.forEach(book => {
+                const bookId = book.id;
+                const metadata = booksMetadata[bookId];
+
+                // Remove previous warning
+                book.classList.remove('oversized-book');
+                const spine = book.querySelector('.book-spine');
+                if (spine) {
+                    spine.removeAttribute('data-warning-text');
+                }
+
+                // Check if book is oversized
+                if (metadata && metadata.physicalHeight) {
+                    const bookHeight = metadata.physicalHeight;
+                    if (bookHeight > shelfHeight) {
+                        book.classList.add('oversized-book');
+                        if (spine) {
+                            spine.setAttribute('data-warning-text',
+                                `This book is ${bookHeight.toFixed(1)}″ tall but shelf is only ${shelfHeight}″. Adjust shelf height or move to a taller shelf.`);
+                        }
+                        console.log(`Warning: Book ${bookId} (${bookHeight}") is taller than shelf ${shelfId} (${shelfHeight}")`);
+                    }
+                }
+            });
+        }
+
+        /**
+         * Recalculate all shelf heights when DPI or scale changes
+         */
+        function recalculateAllShelfHeights() {
+            const shelves = document.querySelectorAll('.bookshelf-row');
+            shelves.forEach(shelf => {
+                const shelfId = shelf.id;
+                const height = shelfHeights[shelfId] || defaultShelfHeight;
+                applyShelfHeight(shelf, height);
+                checkOversizedBooks(shelf);
+            });
         }
 
         /**
@@ -1420,6 +1768,9 @@
                     }
                 }
             });
+
+            // Also recalculate shelf heights
+            recalculateAllShelfHeights();
         }
 
         /**
@@ -1459,10 +1810,22 @@
 
                 onAdd: function (evt) {
                     updateHoldingCount();
+                    // Remove oversized book warning when moving to holding
+                    if (evt.item) {
+                        evt.item.classList.remove('oversized-book');
+                        const spine = evt.item.querySelector('.book-spine');
+                        if (spine) {
+                            spine.removeAttribute('data-warning-text');
+                        }
+                    }
                 },
 
                 onRemove: function (evt) {
                     updateHoldingCount();
+                    // Check for oversized books if moved to a shelf
+                    if (evt.to && evt.to.classList.contains('bookshelf-row')) {
+                        checkOversizedBooks(evt.to);
+                    }
                 },
 
                 onEnd: function (evt) {
@@ -1578,7 +1941,10 @@
                 shelf.querySelectorAll('.book').forEach(book => {
                     bookIds.push(book.id);
                 });
-                order[shelf.id] = bookIds;
+                order[shelf.id] = {
+                    heightInches: shelfHeights[shelf.id] || defaultShelfHeight,
+                    books: bookIds
+                };
             });
 
             localStorage.setItem('bookshelfOrder', JSON.stringify(order));
@@ -1594,6 +1960,19 @@
                 try {
                     const order = JSON.parse(savedOrder);
                     console.log('Loaded bookshelf order:', order);
+
+                    // Restore shelf heights from saved order
+                    Object.keys(order).forEach(shelfId => {
+                        const shelfData = order[shelfId];
+                        // Handle both old format (array) and new format (object with heightInches and books)
+                        if (shelfData.heightInches !== undefined) {
+                            shelfHeights[shelfId] = shelfData.heightInches;
+                        }
+                    });
+
+                    // Save the restored heights
+                    localStorage.setItem('bookshelf-shelf-heights', JSON.stringify(shelfHeights));
+
                     // TODO: Implement restoration of book order
                 } catch (e) {
                     console.error('Failed to parse saved order:', e);
