@@ -354,6 +354,45 @@
             margin: 5px 0;
             font-size: 0.9rem;
         }
+
+        /* Dark Mode Toggle Button */
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--bg-secondary);
+            border: 2px solid var(--border-panel);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px var(--shadow-panel);
+            z-index: 10000;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            padding: 0;
+        }
+
+        #theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px var(--shadow-book);
+        }
+
+        #theme-toggle:focus {
+            outline: 2px solid var(--button-primary);
+            outline-offset: 2px;
+        }
+
+        #theme-icon {
+            font-size: 20px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        #theme-toggle:active #theme-icon {
+            transform: rotate(20deg);
+        }
     </style>
 </head>
 
