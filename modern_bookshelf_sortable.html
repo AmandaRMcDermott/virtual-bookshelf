@@ -922,17 +922,18 @@
                 <div class="settings-content" id="settings-content">
                     <div class="setting-group">
                         <label for="dpi-input">Screen DPI:</label>
-                        <input type="number" id="dpi-input" value="96" min="50" max="300">
+                        <input type="number" id="dpi-input" value="54" min="50" max="300">
+                        <!-- <input type="number" id="dpi-input" value="96" min="50" max="300"> -->
                         <button id="calibrate-btn" class="small-btn"
                             aria-label="Calibrate screen DPI">Calibrate</button>
                     </div>
                     <div class="setting-group">
                         <label for="default-shelf-height">Default Shelf Height (inches):</label>
-                        <input type="number" id="default-shelf-height" value="12" min="6" max="24" step="0.5">
+                        <input type="number" id="default-shelf-height" value="12" min="6" max="34" step="0.5">
                     </div>
                     <div class="setting-group">
                         <label for="scale-slider">Display Scale: <span id="scale-value">50</span>%</label>
-                        <input type="range" id="scale-slider" min="10" max="200" value="50" step="5">
+                        <input type="range" id="scale-slider" min="10" max="100" value="20" step="1">
                         <small style="display: block; color: var(--text-primary); opacity: 0.7; margin-top: 5px;">
                             (% of life-size. 50% = half size, 100% = actual size on screen)
                         </small>
@@ -1070,7 +1071,7 @@
             document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
 
             // Calibration slider event listener
-            document.getElementById('calibration-slider').addEventListener('input', function(e) {
+            document.getElementById('calibration-slider').addEventListener('input', function (e) {
                 const dpi = parseInt(e.target.value);
                 updateRulerWidth(dpi);
             });
@@ -1080,14 +1081,14 @@
             document.getElementById('calibration-cancel-btn').addEventListener('click', closeCalibrationModal);
 
             // Close calibration modal when clicking outside
-            document.getElementById('calibration-modal').addEventListener('click', function(e) {
+            document.getElementById('calibration-modal').addEventListener('click', function (e) {
                 if (e.target.id === 'calibration-modal') {
                     closeCalibrationModal();
                 }
             });
 
             // Keyboard support - close modal with Escape key
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 const modal = document.getElementById('calibration-modal');
                 if (e.key === 'Escape' && modal.classList.contains('active')) {
                     closeCalibrationModal();
@@ -1564,7 +1565,7 @@
                            id="height-input-${shelfId}"
                            value="${currentHeight}"
                            min="6"
-                           max="24"
+                           max=34"
                            step="0.5">
                     <button class="save-btn" data-shelf-id="${shelfId}">Save</button>
                     <button class="cancel-btn" data-shelf-id="${shelfId}">Cancel</button>
@@ -1612,8 +1613,8 @@
             }
 
             const newHeight = parseFloat(input.value);
-            if (isNaN(newHeight) || newHeight < 6 || newHeight > 24) {
-                alert('Shelf height must be a number between 6 and 24 inches.');
+            if (isNaN(newHeight) || newHeight < 6 || newHeight > 34) {
+                alert('Shelf height must be a number between 6 and 34 inches.');
                 cancelShelfHeightEdit(shelfId);
                 return;
             }
@@ -1746,7 +1747,7 @@
          */
         function handleDefaultHeightChange(event) {
             const newHeight = parseFloat(event.target.value);
-            if (newHeight >= 6 && newHeight <= 24) {
+            if (newHeight >= 6 && newHeight <= 34) {
                 defaultShelfHeight = newHeight;
                 localStorage.setItem('bookshelf-default-shelf-height', defaultShelfHeight);
                 console.log('Default shelf height updated to:', defaultShelfHeight);
@@ -1998,11 +1999,13 @@
     </script>
 
     <!-- Calibration Modal -->
-    <div id="calibration-modal" class="calibration-modal" role="dialog" aria-modal="true" aria-labelledby="calibration-title">
+    <div id="calibration-modal" class="calibration-modal" role="dialog" aria-modal="true"
+        aria-labelledby="calibration-title">
         <div class="calibration-content">
             <h2 id="calibration-title">Screen DPI Calibration</h2>
             <div class="calibration-instructions">
-                <p>Hold a physical ruler against your screen. Adjust the slider below until the on-screen ruler matches your physical ruler exactly.</p>
+                <p>Hold a physical ruler against your screen. Adjust the slider below until the on-screen ruler matches
+                    your physical ruler exactly.</p>
                 <p><strong>Tip:</strong> Most screens are between 96-150 DPI. Retina displays can be 200+ DPI.</p>
             </div>
 
@@ -2016,8 +2019,8 @@
 
             <div class="calibration-controls">
                 <label for="calibration-slider">Adjust DPI:</label>
-                <input type="range" id="calibration-slider" class="calibration-slider"
-                       min="50" max="300" value="96" step="1">
+                <input type="range" id="calibration-slider" class="calibration-slider" min="50" max="300" value="96"
+                    step="1">
                 <div class="calibration-dpi-display">
                     <span id="calibration-dpi-value">96</span> DPI
                 </div>
