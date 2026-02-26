@@ -258,6 +258,22 @@
             align-content: start;
         }
 
+        /* Books in temporary holding - smaller display */
+        .holding-area .book {
+            margin: 0;
+        }
+
+        .holding-area .book-spine {
+            width: 60px !important;
+            height: 80px !important;
+            font-size: 0.6rem;
+        }
+
+        .holding-area .spine-image {
+            width: 100%;
+            height: 100%;
+        }
+
         /* Responsive design */
         @media (max-width: 1024px) {
             .app-container {
@@ -1174,6 +1190,50 @@
                 localStorage.setItem('bookshelf-default-shelf-height', defaultShelfHeight);
                 recalculateAllBookSizes();
             }
+        }
+
+        /**
+         * Initialize SortableJS on temporary holding area
+         */
+        function initializeTemporaryHolding() {
+            const holdingArea = document.getElementById('temporary-holding');
+
+            const sortable = Sortable.create(holdingArea, {
+                group: 'books', // Same group as shelves for cross-dragging
+                animation: 250,
+                easing: 'cubic-bezier(0.2, 0, 0, 1)',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                forceFallback: false,
+                fallbackOnBody: true,
+
+                onAdd: function(evt) {
+                    updateHoldingCount();
+                },
+
+                onRemove: function(evt) {
+                    updateHoldingCount();
+                },
+
+                onEnd: function(evt) {
+                    saveBookshelfOrder();
+                }
+            });
+
+            sortableInstances.push(sortable);
+            console.log('Temporary holding initialized');
+        }
+
+        /**
+         * Update temporary holding count badge
+         */
+        function updateHoldingCount() {
+            const holdingArea = document.getElementById('temporary-holding');
+            const count = holdingArea.querySelectorAll('.book').length;
+            const badge = document.getElementById('holding-count');
+
+            badge.textContent = count === 1 ? '1 book' : `${count} books`;
         }
 
         /**
