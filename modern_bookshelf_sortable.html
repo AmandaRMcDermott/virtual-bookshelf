@@ -121,6 +121,154 @@
             margin-top: 20px;
         }
 
+        /* Flexbox layout for main app */
+        .app-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .bookshelf-main-area {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .side-panel {
+            width: 350px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Settings Section */
+        .settings-section {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .settings-header {
+            padding: 12px 15px;
+            background-color: var(--bg-header);
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .settings-header:hover {
+            opacity: 0.9;
+        }
+
+        .toggle-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .settings-header.collapsed .toggle-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .settings-content {
+            padding: 15px;
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .settings-content.collapsed {
+            max-height: 0;
+            padding: 0 15px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .setting-group input[type="number"] {
+            width: 80px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-panel);
+            border-radius: 4px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            margin-right: 10px;
+        }
+
+        .small-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            background-color: var(--button-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .small-btn:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* Temporary Holding Section */
+        .temporary-holding-section {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 8px;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+
+        .holding-header {
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .count-badge {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .holding-area {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .side-panel {
+                width: 100%;
+            }
+        }
+
         .bookshelf {
             width: 100%;
             box-sizing: border-box;
